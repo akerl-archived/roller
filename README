@@ -1,0 +1,23 @@
+Roller.py is a tool to automate revising and rolling kernels.
+
+The process is pretty self-explanatory, and it walks you through it with fairly informative dialogs:
+
+1) Choose your kernel version. Currently extracted kernels are listed, and it will try to download and/or extract any other version
+2) Select the config to start from. The default is to use your currently loaded configuraton
+3) Confirm the new revision number. The default is the next unused number.
+4) Enter menuconfig and adjust the kernel however you'd like
+5) Confirm if the new revision should be saved
+6) Choose whether or not to install the kernel into /boot/ automatically
+7) Wait for the kernel to make
+8) Choose whether or not to proactively clean the kernel source
+
+The directory structure is laid out like this:
+  archives/ = stored tarballs from kernel.org
+  sources/ = extracted kernel sources
+  configs/ = saved kernel configurations
+
+Some notes:
+  - This uses the pbs module, so you'll need to install it ( https://github.com/amoffat/pbs )
+  - Modules / initramfs are not built or installed, as I configure my kernels to not use them.
+  - When installing kernels, it looks for the first "root (hd$)" and "kernel....root=/dev/blah" lines in your /boot/grub/menu.lst to get those variables.
+

@@ -1,0 +1,6 @@
+sources/
+configs/
+archives/
+.venv/
+.env
+
