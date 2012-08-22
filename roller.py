@@ -183,7 +183,7 @@ else:
 try:
   for line in fileinput.input('.config',inplace=True):
     if line[0:19] == 'CONFIG_LOCALVERSION':
-      print('CONFIG_LOCALVERSION="-{0}"'.format(myRevision))
+      print('CONFIG_LOCALVERSION="_{0}"'.format(myRevision))
     else:
       print(line.rstrip())
 except:
