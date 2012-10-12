@@ -6,9 +6,9 @@ import shutil
 import fileinput
 
 try:
-  import pbs
+  import sh
 except:
-  print("It looks like you don't have the pbs module installed.")
+  print("It looks like you don't have the sh module installed.")
   sys.exit(1)
 
 def extract(version):
@@ -17,7 +17,7 @@ def extract(version):
     To = '{0}sources/'.format(myHome)
     From = '{0}archives/linux-{1}.tar.bz2'.format(myHome,version)
     show = feedback('About to untar, should it be run in the foreground? [y/N]', bool, 'no', '? ')  
-    pbs.tar('-x', '-v', C = To, f = From, _fg=show)
+    sh.tar('-x', '-v', C = To, f = From, _fg=show)
   except:
     print('Failed to extract predownloaded archive archive')
     print('Cleaning up any orphans from extraction')
@@ -40,7 +40,7 @@ def download(version):
   print('Trying to pull kernel from {0}'.format(From))
   try:
     show = feedback('About to wget, should it be run in the foreground? [y/N]', bool, 'no', '? ')
-    pbs.wget(From, O = To, _fg=show)
+    sh.wget(From, O = To, _fg=show)
   except:
     print('Failed to download kernel')
     print('Cleaning up any orphaned bits')
@@ -153,7 +153,7 @@ if os.path.isfile('.config'):
     sys.exit()
 print('Cleaning your kernel tree')
 try:
-  pbs.make('mrproper')
+  sh.make('mrproper')
 except:
   print('Failed to make mrproper your kernel source!')
   sys.exit(1)
@@ -168,7 +168,7 @@ if myConfig == 'current':
               ('localyesconfig','yes','y')]
   cmd = feedback(prompt, options, 'mod')
   try:
-    pbs.make(cmd, _fg=True)
+    sh.make(cmd, _fg=True)
   except:
     print('Failed to make {0} your kernel source!'.format(cmd))
     sys.exit(1)
@@ -191,7 +191,7 @@ except:
   sys.exit(1)
 
 input('Press enter to work some menuconfig magic!')
-pbs.make('menuconfig', _fg=True)
+sh.make('menuconfig', _fg=True)
 
 if feedback('Should configuration {0}_{1} be saved? [Y/n]'.format(myVersion,myRevision), bool, 'yes', '? '):
   shutil.copy('./.config','../../configs/{0}_{1}'.format(myVersion,myRevision))
@@ -199,7 +199,7 @@ if feedback('Should configuration {0}_{1} be saved? [Y/n]'.format(myVersion,myRe
 show = feedback('Run make in foreground? [Y/n]', bool, 'yes', '? ')
 
 try:
-  pbs.make( j=4, _fg=show)
+  sh.make( j=4, _fg=show)
 except:
   print('Failed to make your kernel!')
   sys.exit(1)
@@ -237,7 +237,7 @@ kernel /boot/vmlinuz-{0}_{1} root={3} ro
     print('Failed to modify /boot/grub/menu.lst')
 
 if feedback('Proactively clean the kernel source? [Y/n]', bool, 'yes', '? '):
-  pbs.make('mrproper')
+  sh.make('mrproper')
 
 print('Victory!')
 
