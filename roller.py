@@ -16,8 +16,9 @@ def extract(version):
     print('Extracting kernel from archive')
     To = '{0}sources/'.format(myHome)
     From = '{0}archives/linux-{1}.tar.bz2'.format(myHome,version)
-    show = feedback('About to untar, should it be run in the foreground? [y/N]', bool, 'no', '? ')  
-    sh.tar('-x', '-v', C = To, f = From, _fg=show)
+    show = not feedback('About to untar, should it be run in the foreground? [y/N]', bool, 'no', '? ')  
+    tmp = sh.tar('-x', '-v', C = To, f = From, _bg=show)
+    tmp.wait()
   except:
     print('Failed to extract predownloaded archive archive')
     print('Cleaning up any orphans from extraction')
@@ -39,8 +40,9 @@ def download(version):
     .format(major,testing,version)
   print('Trying to pull kernel from {0}'.format(From))
   try:
-    show = feedback('About to wget, should it be run in the foreground? [y/N]', bool, 'no', '? ')
-    sh.wget(From, O = To, _fg=show)
+    show = not feedback('About to wget, should it be run in the foreground? [y/N]', bool, 'no', '? ')
+    tmp = sh.wget(From, O = To, _bg=show)
+    tmp.wait()
   except:
     print('Failed to download kernel')
     print('Cleaning up any orphaned bits')
@@ -168,7 +170,7 @@ if myConfig == 'current':
               ('localyesconfig','yes','y')]
   cmd = feedback(prompt, options, 'mod')
   try:
-    sh.make(cmd, _fg=True)
+    sh.make(cmd)
   except:
     print('Failed to make {0} your kernel source!'.format(cmd))
     sys.exit(1)
@@ -191,15 +193,17 @@ except:
   sys.exit(1)
 
 input('Press enter to work some menuconfig magic!')
-sh.make('menuconfig', _fg=True)
+#sh.make('menuconfig', _fg=True)
+os.system('make menuconfig')
 
 if feedback('Should configuration {0}_{1} be saved? [Y/n]'.format(myVersion,myRevision), bool, 'yes', '? '):
   shutil.copy('./.config','../../configs/{0}_{1}'.format(myVersion,myRevision))
 
-show = feedback('Run make in foreground? [Y/n]', bool, 'yes', '? ')
+show = not feedback('Run make in foreground? [Y/n]', bool, 'yes', '? ')
 
 try:
-  sh.make( j=4, _fg=show)
+  tmp = sh.make( j=4, _bg=show)
+  tmp.wait()
 except:
   print('Failed to make your kernel!')
   sys.exit(1)
