@@ -35,28 +35,28 @@ def feedback(message = None, validate = None, default = None, inputMsg = '? [{0}
 
 class Kernel(object):
   def __init__(self, root, version = None, config = None, repo = None):
-    self.root = os.path.expanduser(root)
+    self.root = os.path.expanduser(root.rstrip('/'))
     self.version = version
     self.config = config
     self.repo = repo
     self.gotten = False
+    self.made = False
     self.error = False
     self.errormsg = None
-    self.progressCount = 0
 
-    for dir in ['sources','archives','configs']:
+    for dir in ['/sources','/archives','/configs']:
       os.makedirs(self.root + dir, 0o755, True)
 
-    self.Archives = [ x[6:-8] for x in os.listdir(myHome + 'archives') ]
-    self.Sources = [ x[6:] for x in os.listdir(myHome + 'sources') ]
+    self.Archives = [ x[6:-8] for x in os.listdir(self.root + '/archives') ]
+    self.Sources = [ x[6:] for x in os.listdir(self.root + '/sources') ]
     self.Sources.sort(key = lambda source: source.replace('-rc','.'), reverse = True)
-    self.DefaultConfig = ''
+    self.Default = ''
     for source in self.Sources:
       self.Default = source
       if source.find('rc') == -1: 
         break
     raw_configs = [ ( x.split('_')[0], x.split('_')[1] ) 
-      for x in os.listdir('configs/') if len(x.partition('_')[2]) ]
+      for x in os.listdir(self.root + '/configs') if len(x.partition('_')[2]) ]
     self.Configs = { x[0] : [] for x in raw_configs }
     for config in raw_configs:
       self.Configs[config[0]].append((config[1]))
@@ -68,12 +68,6 @@ class Kernel(object):
       print(msg)
       self.error = True
       self.errormsg = msg
-
-  def progressDots(line, stdin, proc):
-    if self.progressCount > 5:
-      print('.', end = None)
-      self.progressCount = 0
-    self.progressCount += 1
 
   def download(self, version = None):
     if version is None and self.version is None:
@@ -98,7 +92,6 @@ class Kernel(object):
     if os.path.isfile(destination):
       return True
 
-    if not self.quiet: print('Pulling kernel from {0}'.format(source))
     try:
       sh.wget(source, O=destination)
     except:
@@ -114,7 +107,7 @@ class Kernel(object):
       version = self.version
 
     destination = '{0}/sources/'.format(self.root)
-    source = '{0}archives/linux-{1}.tar.bz2'.format(self.root,version)
+    source = '{0}/archives/linux-{1}.tar.bz2'.format(self.root,version)
 
     if os.path.isdir('{0}linux-{1}'.format(destination,version)):
       return True
@@ -134,7 +127,7 @@ class Kernel(object):
       version = self.version
 
     if len(version) and not len(version.strip('01234567890.-rc')): 
-      if download(version) and extract(version):
+      if self.download(version) and self.extract(version):
         self.gotten = True
         return True
     return False
@@ -171,16 +164,16 @@ class Kernel(object):
       for source in self.Sources:
         prompt += ''' 
     {0}'''.format(source)
-    if len(self.Archives) and not myArchives <= mySources:
+    if len(self.Archives) and not self.Archives <= self.Sources:
       prompt +='''
   Currently downloaded archives (unpacked sources not listed):'''
-      for archive in myArchives:
-        if archive not in mySources:
+      for archive in self.Archives:
+        if archive not in self.Sources:
           prompt +='''
     {0}'''.format(archive)
 
     self.version = feedback(prompt, self.getKernel, self.Default)
-    self.config = self.configMenu(self.Version)
+    self.config = self.configMenu(self.version)
     return True
 
   def configure(self, merge = None, modify = True):
@@ -261,21 +254,27 @@ class Kernel(object):
     else:
       self.revision = self.config.rsplit('_',1)[-1]        
 
-    print('Making the kernel')
     try:
-      sh.make(j=4, _out=self.progressDots)
+      sh.make(j=4)
     except:
       self.caught('Failed to make your kernel')
       return False
+    self.made = True
     return True
 
   def install(self, doInstall = None):
     if self.error:
       self.caught()
       return False
+    if not self.gotten:
+      self.caught('You need to get a kernel first')
+      return False
+    if not self.made:
+      self.caught('You need to make a kernel first')
+      return False
 
     if doInstall is None:
-      doInstall = feedback('Install kernel to /boot/? [y/N]', bool, 'no', '? '):
+      doInstall = feedback('Install kernel to /boot/? [y/N]', bool, 'no', '? ')
     if doInstall is False:
       return False
 
@@ -313,8 +312,8 @@ default 0
 ''' + grubConfig)
       else:
         edited = False
-        for line in fileinput.input('/boot/grub/menu.lst')
-          if edited is False and line = '\n':
+        for line in fileinput.input('/boot/grub/menu.lst', inplace=True):
+          if edited is False and line == '\n':
             print(grubConfig)
             edited = True
           else:
@@ -326,7 +325,7 @@ default 0
     return True
 
   def simple(self):
-    if self.get() and self.configure() and self.make(): self.install()
+    if self.get() and self.configure(): self.install()
 
 
 if __name__ == "__main__":
