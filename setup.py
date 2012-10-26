@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='roller',
-      version='0.3',
+      version='0.5',
       description='Kernel rolling helper',
       author='Les Aker',
       author_email='me@lesaker.org',
