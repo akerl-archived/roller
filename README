@@ -12,9 +12,9 @@ The process is pretty self-explanatory, and it walks you through it with fairly 
 8) Choose whether or not to proactively clean the kernel source
 
 The directory structure is laid out like this:
-  archives/ = stored tarballs from kernel.org
-  sources/ = extracted kernel sources
-  configs/ = saved kernel configurations
+  - archives/ = stored tarballs from kernel.org
+  - sources/ = extracted kernel sources
+  - configs/ = saved kernel configurations
 
 Some notes:
   - This uses the pbs module, so you'll need to install it ( https://github.com/amoffat/pbs )

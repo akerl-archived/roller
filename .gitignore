@@ -4,4 +4,4 @@ archives/
 .venv/
 .env
 dist/*
-
+build/*

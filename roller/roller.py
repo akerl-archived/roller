@@ -275,7 +275,7 @@ class Kernel(object):
       return False
 
     if doInstall is None:
-      doInstall = feedback('Install kernel to /boot/? [y/N]', bool, 'no', '? '):
+      doInstall = feedback('Install kernel to /boot/? [y/N]', bool, 'no', '? ')
     if doInstall is False:
       return False
 
