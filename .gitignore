@@ -3,4 +3,5 @@ configs/
 archives/
 .venv/
 .env
+dist/*
 
