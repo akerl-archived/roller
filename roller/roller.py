@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -34,11 +34,10 @@ def feedback(message = None, validate = None, default = None, inputMsg = '? [{0}
         return tmp 
 
 class Kernel(object):
-  def __init__(self, root, version = None, config = None, repo = None):
+  def __init__(self, root, version = None, config = None):
     self.root = os.path.expanduser(root.rstrip('/'))
     self.version = version
     self.config = config
-    self.repo = repo
     self.gotten = False
     self.made = False
     self.error = False
@@ -132,7 +131,7 @@ class Kernel(object):
         return True
     return False
 
-  def configMenu(self, version):
+  def configMenu(self, version = self.Default):
     options = [('current','c')]
     prompt = '''What config do you want to use?
   [c]urrent (use the currently running kernel's config)'''
@@ -253,6 +252,19 @@ class Kernel(object):
           pass
     else:
       self.revision = self.config.rsplit('_',1)[-1]        
+    self.configured = True
+    return True
+
+  def make(self):
+    if self.error:
+      self.caught()
+      return False
+    if not self.gotten:
+      self.caught('You need to get a kernel first')
+      return False
+    if not self.configured:
+      self.caught('You need to configure a kernel first')
+      return False
 
     try:
       sh.make(j=4)
@@ -268,6 +280,9 @@ class Kernel(object):
       return False
     if not self.gotten:
       self.caught('You need to get a kernel first')
+      return False
+    if not self.configured:
+      self.caught('You need to configure a kernel first')
       return False
     if not self.made:
       self.caught('You need to make a kernel first')
@@ -325,7 +340,7 @@ default 0
     return True
 
   def simple(self):
-    if self.get() and self.configure(): self.install()
+    if self.get() and self.configure() and self.make(): self.install()
 
 
 if __name__ == "__main__":
