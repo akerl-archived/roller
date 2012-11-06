@@ -131,7 +131,9 @@ class Kernel(object):
         return True
     return False
 
-  def configMenu(self, version = self.Default):
+  def configMenu(self, version = None):
+    if version is None:
+      version = self.Default
     options = [('current','c')]
     prompt = '''What config do you want to use?
   [c]urrent (use the currently running kernel's config)'''

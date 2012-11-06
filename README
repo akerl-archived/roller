@@ -17,7 +17,7 @@ The directory structure is laid out like this:
   - configs/ = saved kernel configurations
 
 Some notes:
-  - This uses the pbs module, so you'll need to install it ( https://github.com/amoffat/pbs )
+  - This uses the sh module, so you'll need to have it installed ( https://github.com/amoffat/sh )
   - Modules / initramfs are not built or installed, as I configure my kernels to not use them.
   - When installing kernels, it looks for the first "root (hd$)" and "kernel....root=/dev/blah" lines in your /boot/grub/menu.lst to get those variables.
 
