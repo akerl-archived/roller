@@ -75,7 +75,6 @@ class Kernel(object):
     if version is None:
       version = self.version
 
-
     if version[0] == '2':
       major = version[0:3]
     else:
@@ -153,7 +152,7 @@ class Kernel(object):
   [{0}] ({1} config(s))'''.format(key,len(self.Configs[key]))
 
     choice = feedback(prompt, options, 'current')
-    if choice == 'current' or choice.find('_'):
+    if choice == 'current' or '_' in choice:
       return choice
     self.configMenu(choice)
 
@@ -181,7 +180,7 @@ class Kernel(object):
     if self.error:
       self.caught()
       return False
-    if self.version is None and self.config is None:
+    if self.version is None or self.config is None:
       self.caught('Cannot configure without a version or config set')
       return False
     if not self.gotten:
@@ -209,21 +208,21 @@ class Kernel(object):
       self.caught('Failed to load your config')
       return False
 
-    if merge is None:
-      prompt = '''Which merge method would you like to use?
+    if modify is True:
+      if merge is None:
+        prompt = '''Which merge method would you like to use?
   [o]ldconfig
   local[m]odconfig
   local[y]esconfig'''
-      options = [ ('oldconfig','old','o'), ('localmodconfig','mod','m'), ('localyesconfig','yes','y')]
-      merge = feedback(prompt, options, 'mod')
+        options = [ ('oldconfig','old','o'), ('localmodconfig','mod','m'), ('localyesconfig','yes','y')]
+        merge = feedback(prompt, options, 'mod')
 
-    try:
-      sh.make(merge)
-    except:
-      self.caught('Failed to make {0} your kernel source!'.format(merge))
-      return False
+      try:
+        sh.make(merge)
+      except:
+        self.caught('Failed to make {0} your kernel source!'.format(merge))
+        return False
 
-    if modify is True:
       if self.version in self.Configs:
         self.revision = str(len(self.Configs[self.version])+1)
       else:
