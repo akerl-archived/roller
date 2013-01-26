@@ -25,15 +25,15 @@ else:
   def crunchVersion(version):
     numbers = [ int(x) for x in version[3:].translate(str.maketrans('-rc_.','     ')).split() ]
     if 'rc' in version:
-      crunched = 1000
+      crunched = 100000
     elif '.' not in version:
       crunched = 0
     else: 
-      crunched = -1000
-    base = 
+      crunched = -100000
+    base = 1
     for number in reversed(numbers):
       crunched -= number * base
-      base *= 10
+      base *= 100
     return crunched
     
   versions = [ x for x in sorted(os.listdir(root + '/configs'), reverse=True) if x != '.git' ]
