@@ -36,7 +36,7 @@ else:
       base *= 100
     return crunched
     
-  versions = [ x for x in sorted(os.listdir(root + '/configs'), reverse=True) if x != '.git' ]
+  versions = [ x for x in sorted(os.listdir(root + '/configs'), reverse=True) if x != '.git' and 'rc' not in x ]
   myKernel.config = [ x for x in sorted(versions, key=crunchVersion) if x[0:3] == versions[0][0:3] ][0]
 
 myKernel.version = myKernel.config.split('_')[0]
