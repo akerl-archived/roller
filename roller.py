@@ -245,10 +245,10 @@ class Kernel(object):
       shutil.copy('.config', '../../configs/{0}_{1}'.format(self.version, self.revision))
 
       if os.path.isdir('../../configs/.git'):
-        sh.git.add('{0}_{1}'.format(self.version,self.revision), _cwd=self.root + '/configs')
-        sh.git.commit(_cwd=self.root + '/configs', m='Added {0}_{1}'.format(self.version, self.revision))
+        sh.git.add('{0}_{1}'.format(self.version,self.revision), _cwd='../../configs')
+        sh.git.commit(_cwd='../../configs', m='Added {0}_{1}'.format(self.version, self.revision))
         try:
-          sh.git.push(_cwd=self.root + '/configs')
+          sh.git.push(_cwd='../../configs')
         except:
           pass
     else:
