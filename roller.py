@@ -301,14 +301,11 @@ class Kernel(object):
       return False
 
     try:
-      with open('/proc/partitions') as handle:
-        dev = None
-        for line in handle:
-          tmp = line.rsplit(None,1)
-          if len(tmp) and tmp[1] != 'name':
-            dev = '/dev/' + tmp[1]
-            break
-      if dev == '/dev/xvda':
+      with open('/etc/fstab') as handle:
+        dev = [ x.split()[0] for x in handle.readlines() if 'ext' in x ][0]
+      try:
+        int(dev[-1])
+      except:
         hd = '(hd0)'
       else:
         hd = '(hd0,0)'
@@ -325,7 +322,7 @@ kernel /boot/vmlinuz-{0}_{1} root={3} ro
         with open('/boot/grub/menu.lst', 'w') as handle:
           handle.write('''timeout 25
 default 0
-''' + grubConfig)
+''' + grubConfig + '\n')
       else:
         edited = False
         for line in fileinput.input('/boot/grub/menu.lst', inplace=True):
