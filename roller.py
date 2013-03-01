@@ -218,7 +218,8 @@ class Kernel(object):
         merge = feedback(prompt, options, 'mod')
 
       try:
-        sh.make(merge)
+        #sh.make(merge)
+        os.system('make ' + merge)
       except:
         self.caught('Failed to make {0} your kernel source!'.format(merge))
         return False
