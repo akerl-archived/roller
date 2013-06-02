@@ -34,6 +34,7 @@ def get_args():
     parser.add_argument(
         '-n', '--new-revision',
         dest='new_revision',
+        type=str,
         default=None,
         help='Kernel revision to create',
     )
@@ -46,6 +47,7 @@ def get_args():
     parser.add_argument(
         '-r', '--config-revision',
         dest='config_revision',
+        type=str,
         default='current',
         help='Config revision to work from',
     )
