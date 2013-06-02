@@ -1,353 +1,313 @@
 #!/usr/bin/env python3
 
+VERSION = '0.2.1'
+
 import os
 import sys
 import shutil
 import fileinput
-import sh
+import functools
+import urllib.request
+import tarfile
+import gzip
+import subprocess
+import multiprocessing
+import argparse
+import string
 
-def feedback(message = None, validate = None, default = None, inputMsg = '? [{0}] '):
-  if message is not None:
-    print(message)
-  while True:
-    tmp = input(inputMsg.format(default))
-    if tmp == '' and default is not None:
-      tmp = default
-    tmp = tmp.lower()
-    if validate is bool:
-      if tmp in ['y','yes']:
-        return True
-      elif tmp in ['n','no']:
-        return False
-    elif validate is int:
-      if tmp.isdigit():
-        return int(tmp)
-    elif type(validate) is list:
-      if type(validate[0]) is tuple:
-        for item in validate:
-          if tmp in item:
-            return item[0]
-      elif tmp in validate:
-        return tmp 
-    elif hasattr(validate, '__call__'):
-      if validate(tmp):
-        return tmp 
+
+def get_args():
+    parser = argparse.ArgumentParser(
+        description='Simplified kernel rolling tool'
+    )
+    parser.add_argument(
+        '--version',
+        action='version',
+        version=VERSION
+    )
+    parser.add_argument(
+        '-k', '--kernel',
+        dest='new_version',
+        default=get_latest_kernel_version(),
+        help='Kernel version to build',
+    )
+    parser.add_argument(
+        '-n', '--new-revision',
+        dest='new_revision',
+        default=None,
+        help='Kernel revision to create',
+    )
+    parser.add_argument(
+        '-c', '--config',
+        dest='config_version',
+        default=get_current_kernel_version(),
+        help='Config version to work from',
+    )
+    parser.add_argument(
+        '-r', '--config-revision',
+        dest='config_revision',
+        default='current',
+        help='Config revision to work from',
+    )
+    parser.add_argument(
+        '-s', '--skip-install',
+        dest='skip_install',
+        action='store_true',
+        help='Do not install kernel to /boot'
+    )
+    return parser.parse_args()
+
+
+def get_latest_kernel_version(kind='stable'):
+    kernel_url = 'https://www.kernel.org/finger_banner'
+    search_string = 'The latest {0}'.format(kind)
+    with urllib.request.urlopen(kernel_url) as handle:
+        for raw_line in handle.readlines():
+            line = str(raw_line, encoding='utf8').rstrip('\n')
+            if search_string in line:
+                return line.rstrip(' (EOL)').rsplit(' ', 1)[1]
+    raise LookupError('Could not find the latest {0} kernel'.format(kind))
+
+
+def get_current_kernel_version():
+    return os.uname().release.split('-', 1)[0]
+
+
+def get_current_kernel_revision():
+    curent_revision = os.uname().release.rsplit('-', 1)[1]
+    if all(x in set(string.digits) for x in current_revision):
+        return current_revision
+    else:
+        return '0'
+
+
+def require_attr(attribute):
+    def decorator(method):
+        @functools.wraps(method)
+        def wrapper(self, *args, **kwargs):
+            if getattr(self, attribute, None) is None:
+                raise LookupError(
+                    'Required attribute is unset: {0}'.format(attribute)
+                )
+            method(self, *args, **kwargs)
+        return wrapper
+    return decorator
+
 
 class Kernel(object):
-  def __init__(self, root, version = None, config = None):
-    self.root = os.path.expanduser(root.rstrip('/'))
-    self.version = version
-    self.config = config
-    self.gotten = False
-    self.made = False
-    self.error = False
-    self.errormsg = None
+    def __init__(self, root_dir=None):
+        self.version = None
+        self.revision = None
+        self.config_version = None
+        self.config_revision = None
 
-    for dir in ['/sources','/archives','/configs']:
-      os.makedirs(self.root + dir, 0o755, True)
+        if root_dir is None:
+            if len(sys.argv[0]):
+                os.chdir(os.path.dirname(sys.argv[0]))
+            self.root_dir = os.getcwd()
+        else:
+            self.root_dir = os.path.expanduser(root_dir.rstrip('/'))
+            os.chdir(self.root_dir)
 
-    self.Archives = [ x[6:-8] for x in os.listdir(self.root + '/archives') ]
-    self.Sources = [ x[6:] for x in os.listdir(self.root + '/sources') ]
-    self.Sources.sort(key = lambda source: source.replace('-rc','.'), reverse = True)
-    self.Default = ''
-    for source in self.Sources:
-      self.Default = source
-      if source.find('rc') == -1: 
-        break
-    raw_configs = [ ( x.split('_')[0], x.split('_')[1] ) 
-      for x in os.listdir(self.root + '/configs') if len(x.partition('_')[2]) ]
-    self.Configs = { x[0] : [] for x in raw_configs }
-    for config in raw_configs:
-      self.Configs[config[0]].append((config[1]))
+        for subdir in ['/sources', '/archives', '/configs']:
+            os.makedirs(self.root_dir + subdir, 0o755, True)
 
-  def caught(self, msg = None):
-    if msg is None:
-      print('Caught due to previous error: {0}'.format(self.errormsg))
-    else:
-      print(msg)
-      self.error = True
-      self.errormsg = msg
+        raw_configs = [
+            x.split('_')
+            for x in os.listdir(self.root_dir + '/configs')
+            if '_' in x
+        ]
+        self.existing_configs = {
+            x[0]: [] for x in raw_configs
+        }
+        for config in raw_configs:
+            self.existing_configs[config[0]].append((config[1]))
 
-  def download(self, version = None):
-    if version is None and self.version is None:
-      self.caught('Cannot download with no version set')
-      return False
-    if version is None:
-      version = self.version
+    @require_attr('version')
+    def download(self):
+        if self.version[0] == '2':
+            major = self.version[0:3]
+        else:
+            major = '3.x'
+        if 'rc' in self.version:
+            testing = 'testing/'
+        else:
+            testing = ''
 
-    if version[0] == '2':
-      major = version[0:3]
-    else:
-      major = '3.x'
-    if version.find('rc') != -1:
-      testing = 'testing/'
-    else:
-      testing = ''
+        destination = '{0}/archives/linux-{1}.tar.bz2'.format(
+            self.root_dir,
+            self.version
+        )
+        source = 'http://www.kernel.org/pub/linux/kernel/v{0}/{1}linux-{2}.tar.xz'.format(
+            major,
+            testing,
+            self.version
+        )
 
-    destination = '{0}/archives/linux-{1}.tar.bz2'.format(self.root,version)
-    source = 'http://www.kernel.org/pub/linux/kernel/v{0}/{1}linux-{2}.tar.bz2'.format(major,testing,version)
-
-    if os.path.isfile(destination):
-      return True
-
-    try:
-      sh.wget(source, O=destination)
-    except:
-      os.remove(destination)
-      return False
-    return True
-
-  def extract(self, version = None):
-    if version is None and self.version is None:
-      self.caught('Cannot extract with no version set')
-      return False
-    if version is None:
-      version = self.version
-
-    destination = '{0}/sources/'.format(self.root)
-    source = '{0}/archives/linux-{1}.tar.bz2'.format(self.root,version)
-
-    if os.path.isdir('{0}linux-{1}'.format(destination,version)):
-      return True
-
-    try:
-      sh.tar(x=True, C=destination, f=source)
-    except:
-      shutil.rmtree('{0}linux-{1}'.format(destination,version), ignore_errors=True)
-      return False
-    return True
-
-  def getKernel(self, version = None):
-    if version is None and self.version is None:
-      self.caught('Cannot get kernel with no version set')
-      return False
-    if version is None:
-      version = self.version
-
-    if len(version) and not len(version.strip('01234567890.-rc')): 
-      if self.download(version) and self.extract(version):
-        self.gotten = True
-        return True
-    return False
-
-  def configMenu(self, version = None):
-    if version is None:
-      version = self.Default
-    options = [('current','c')]
-    prompt = '''What config do you want to use?
-  [c]urrent (use the currently running kernel's config)'''
-
-    if version in self.Configs:
-      for revision in self.Configs[version]:
-        options.append(('{0}_{1}'.format(version,revision), revision))
-        prompt+='''    
-  {0}_[{1}]'''.format(version,revision)
-
-    for key in sorted(self.Configs.keys(), reverse=True):
-      if key == version:
-        continue
-      options.append((key))
-      options.append(tuple( '{0}_{1}'.format(key,x) for x in self.Configs[key] ))
-      prompt+=''''
-  [{0}] ({1} config(s))'''.format(key,len(self.Configs[key]))
-
-    choice = feedback(prompt, options, 'current')
-    if choice == 'current' or '_' in choice:
-      return choice
-    self.configMenu(choice)
-
-  def get(self):
-    prompt = '''What kernel version do you want to use?'''
-    if len(self.Sources):
-      prompt +='''
-  Currently unpacked kernels:'''
-      for source in self.Sources:
-        prompt += ''' 
-    {0}'''.format(source)
-    if len(self.Archives) and not self.Archives <= self.Sources:
-      prompt +='''
-  Currently downloaded archives (unpacked sources not listed):'''
-      for archive in self.Archives:
-        if archive not in self.Sources:
-          prompt +='''
-    {0}'''.format(archive)
-
-    self.version = feedback(prompt, self.getKernel, self.Default)
-    self.config = self.configMenu(self.version)
-    return True
-
-  def configure(self, merge = None, modify = True):
-    if self.error:
-      self.caught()
-      return False
-    if self.version is None or self.config is None:
-      self.caught('Cannot configure without a version or config set')
-      return False
-    if not self.gotten:
-      self.caught('Cannot configure without getting the kernel')
-      return False
-
-    try:
-      os.chdir('{0}/sources/linux-{1}'.format(self.root,self.version))
-    except:
-      self.caught('Failed to chdir into kernel directory')
-      return False
-
-    try:
-      sh.make.mrproper()
-    except:
-      self.caught('Failed to make mrproper your tree')
-      return False
-
-    try:
-      if self.config == 'current':
-        sh.zcat('/proc/config.gz', _out='.config')
-      else:
-        shutil.copy('../../configs/{0}'.format(self.config), '.config')
-    except:
-      self.caught('Failed to load your config')
-      return False
-
-    if modify is True:
-      if merge is None:
-        prompt = '''Which merge method would you like to use?
-  [o]ldconfig
-  local[m]odconfig
-  local[y]esconfig'''
-        options = [ ('oldconfig','old','o'), ('localmodconfig','mod','m'), ('localyesconfig','yes','y')]
-        merge = feedback(prompt, options, 'mod')
-
-      try:
-        #sh.make(merge)
-        os.system('make ' + merge)
-      except:
-        self.caught('Failed to make {0} your kernel source!'.format(merge))
-        return False
-
-      if self.version in self.Configs:
-        self.revision = str(len(self.Configs[self.version])+1)
-      else:
-        self.revision = 1
-      try:
-        for line in fileinput.input('.config', inplace=True):
-          if line[0:19] == 'CONFIG_LOCALVERSION':
-            print('CONFIG_LOCALVERSION="_{0}"'.format(self.revision))
-          else:
-            print(line.rstrip())
-      except:
-        self.caught('Failed to prepare .config with new revision')
-        return False
-      try:
-        os.system('make menuconfig')
-      except:
-        self.caught('Failed to make menuconfig')
-        return False
-
-      shutil.copy('.config', '../../configs/{0}_{1}'.format(self.version, self.revision))
-
-      if os.path.isdir('../../configs/.git'):
-        sh.git.add('{0}_{1}'.format(self.version,self.revision), _cwd='../../configs')
-        sh.git.commit(_cwd='../../configs', m='Added {0}_{1}'.format(self.version, self.revision))
+        if os.path.isfile(destination):
+            return
         try:
-          sh.git.push(_cwd='../../configs')
+            urllib.request.urlretrieve(source, filename=destination)
         except:
-          pass
-    else:
-      self.revision = self.config.rsplit('_',1)[-1]        
-    self.configured = True
-    return True
+            os.remove(destination)
+            raise
 
-  def make(self):
-    if self.error:
-      self.caught()
-      return False
-    if not self.gotten:
-      self.caught('You need to get a kernel first')
-      return False
-    if not self.configured:
-      self.caught('You need to configure a kernel first')
-      return False
+    @require_attr('version')
+    def extract(self):
+        destination = '{0}/sources/'.format(self.root_dir)
+        source = '{0}/archives/linux-{1}.tar.bz2'.format(
+            self.root_dir,
+            self.version
+        )
 
-    try:
-      sh.make(j=4)
-    except:
-      self.caught('Failed to make your kernel')
-      return False
-    self.made = True
-    return True
+        if os.path.isdir('{0}linux-{1}'.format(destination, self.version)):
+            return
+        if not os.path.isfile(source):
+            raise EnvironmentError('Archived kernel does not exist')
+        try:
+            archive = tarfile.open(source)
+            archive.extractall(destination)
+        except:
+            shutil.rmtree(
+                '{0}linux-{1}'.format(destination, self.version),
+                ignore_errors=True
+            )
+            raise
 
-  def install(self, doInstall = None):
-    if self.error:
-      self.caught()
-      return False
-    if not self.gotten:
-      self.caught('You need to get a kernel first')
-      return False
-    if not self.configured:
-      self.caught('You need to configure a kernel first')
-      return False
-    if not self.made:
-      self.caught('You need to make a kernel first')
-      return False
+    @require_attr('version')
+    @require_attr('config_version')
+    @require_attr('config_revision')
+    def configure(self, merge_method='oldconfig'):
+        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        try:
+            subprocess.call(['make', 'mrproper'], stdout=subprocess.DEVNULL)
+        except:
+            raise EnvironmentError('Failed to clean your kernel tree')
+        if self.config_revision == 'current':
+            with gzip.open('/proc/config.gz') as old_config:
+                with open('.config', 'wb') as new_config:
+                    new_config.write(old_config.read())
+        else:
+            shutil.copy(
+                '{0}/configs/{1}_{2}'.format(
+                    self.root_dir,
+                    self.config_version,
+                    self.config_revision
+                ),
+                '.config'
+            )
+        if self.config_version != self.version:
+            subprocess.call(['make', merge_method])
 
-    if doInstall is None:
-      doInstall = feedback('Install kernel to /boot/? [y/N]', bool, 'no', '? ')
-    if doInstall is False:
-      return False
+    @require_attr('version')
+    @require_attr('revision')
+    def modify(self):
+        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        done = False
+        for line in fileinput.input('.config', inplace=True):
+            if not done and 'CONFIG_LOCALVERSION' in line:
+                print('CONFIG_LOCALVERSION=_{0}'.format(self.revision))
+                done = True
+            else:
+                print(line.rstrip())
+        subprocess.call(['make', 'menuconfig'])
+        shutil.copy(
+            '.config',
+            '{0}/configs/{1}_{2}'.format(
+                self.root_dir,
+                self.version,
+                self.revision,
+            ),
+        )
 
-    try:
-      shutil.copy('arch/x86/boot/bzImage', '/boot/vmlinuz-{0}_{1}'.format(self.version,self.revision))
-    except:
-      self.caught('Failed to copy vmlinuz into place')
-      return False
+    @require_attr('version')
+    def make(self, jobs=None, background=True):
+        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        if background:
+            stdout = subprocess.DEVNULL
+        else:
+            stdout = None
+        if jobs is None:
+            jobs = str(multiprocessing.cpu_count())
+        subprocess.call(['make', '-j' + jobs], stdout=stdout, stderr=stdout)
 
-    try:
-      with open('/etc/fstab') as handle:
-        dev = [ x.split()[0] for x in handle.readlines() if 'ext' in x ][0]
-      try:
-        int(dev[-1])
-      except:
-        hd = '(hd0)'
-      else:
-        hd = '(hd0,0)'
-
-      grubConfig = '''
+    @require_attr('version')
+    @require_attr('revision')
+    def install(self):
+        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        shutil.copy(
+            'arch/x86/boot/bzImage',
+            '/boot/vmlinuz-{0}_{1}'.format(self.version, self.revision)
+        )
+        with open('/etc/fstab') as handle:
+            device = [
+                x.split()[0]
+                for x in handle.readlines()
+                if 'ext' in x
+            ][0]
+        try:
+            int(device[-1])
+        except ValueError:
+            hd = '(hd0)'
+        else:
+            hd = '(hd0,0)'
+        grub_config = '''
 title {0}_{1}
-root {2}
-kernel /boot/vmlinuz-{0}_{1} root={3} ro
-'''.format(self.version, self.revision, hd, dev)
-
-      if not os.path.isdir('/boot/grub'):
-        os.makedirs('/boot/grub', 0o755, True)
-      if not os.path.isfile('/boot/grub/menu.lst'):
-        with open('/boot/grub/menu.lst', 'w') as handle:
-          handle.write('''timeout 25
-default 0
-''' + grubConfig + '\n')
-      else:
-        edited = False
+root {3}
+kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
+            self.version, self.revision, device, hd)
+        if not os.path.isdir('/boot/grub'):
+            os.makedirs('/boot/grub', 0o755, True)
+        if not os.path.isfile('/boot/grub/menu.lst'):
+            with open('/boot/grub/menu.lst', 'w') as handle:
+                handle.write('timeout 25\ndefault0\n\n#START\n')
+        done = False
         for line in fileinput.input('/boot/grub/menu.lst', inplace=True):
-          if edited is False and line == '\n':
-            print(grubConfig)
-            edited = True
-          else:
             print(line.rstrip())
-    except:
-      self.caught('Failed to edit grub config')
-      return False
-
-    return True
-
-  def simple(self):
-    if self.get() and self.configure() and self.make(): self.install()
+            if not done and line == '#START\n':
+                print(grub_config)
+                done = True
+        if not done:
+            raise EnvironmentError('Failed to update /boot/grub/menu.lst')
 
 
-if __name__ == "__main__":
-  location = __file__.rpartition('/')
-  if location[1] == '/':
-    root = location[0]
-  else:
-    root = '.'
-  myKernel = Kernel(root)
-  myKernel.simple()
+def easy_roll():
+    kernel = Kernel()
+    args = get_args()
+
+    kernel.version = args.new_version
+    kernel.config_version = args.config_version
+    kernel.config_revision = args.config_revision
+    if args.new_revision == 'next':
+        if args.new_version in kernel.existing_configs:
+            kernel.revision = str(
+                int(max(kernel.existing_configs[args.new_version])) + 1
+            )
+        else:
+            kernel.revision = '1'
+        modify = True
+    elif args.new_revision is None:
+        if args.new_version == args.config_version:
+            if args.config_revision == 'current':
+                kernel.revision = get_current_kernel_revision()
+            else:
+                kernel.revision = args.config_revision
+        else:
+            kernel.revision = '0'
+        modify = False
+    else:
+        kernel.revision = args.new_revision
+        modify = True
+
+    kernel.download()
+    kernel.extract()
+    kernel.configure()
+    if modify:
+        kernel.modify()
+    kernel.make()
+    if not args.skip_install:
+        kernel.install()
+
+if __name__ == '__main__':
+    easy_roll()
 
