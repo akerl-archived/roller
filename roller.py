@@ -177,6 +177,7 @@ class Kernel(object):
             raise
 
     @require_attr('version')
+    @require_attr('revision')
     @require_attr('config_version')
     @require_attr('config_revision')
     def configure(self, merge_method='oldconfig'):
@@ -198,6 +199,13 @@ class Kernel(object):
                 ),
                 '.config'
             )
+        done = False
+        for line in fileinput.input('.config', inplace=True):
+            if not done and line.find('CONFIG_LOCALVERSION') == 0:
+                print('CONFIG_LOCALVERSION=_{0}'.format(self.revision))
+                done = True
+            else:
+                print(line.rstrip())
         if self.config_version != self.version:
             subprocess.call(['make', merge_method])
 
@@ -205,13 +213,6 @@ class Kernel(object):
     @require_attr('revision')
     def modify(self):
         os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
-        done = False
-        for line in fileinput.input('.config', inplace=True):
-            if not done and 'CONFIG_LOCALVERSION' in line:
-                print('CONFIG_LOCALVERSION=_{0}'.format(self.revision))
-                done = True
-            else:
-                print(line.rstrip())
         subprocess.call(['make', 'menuconfig'])
         shutil.copy(
             '.config',
