@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = '0.2.1'
+VERSION = '0.2.2'
 
 import os
 import sys
@@ -202,7 +202,7 @@ class Kernel(object):
         done = False
         for line in fileinput.input('.config', inplace=True):
             if not done and line.find('CONFIG_LOCALVERSION') == 0:
-                print('CONFIG_LOCALVERSION=_{0}'.format(self.revision))
+                print('CONFIG_LOCALVERSION="_{0}"'.format(self.revision))
                 done = True
             else:
                 print(line.rstrip())
