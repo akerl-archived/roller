@@ -72,11 +72,11 @@ def get_latest_kernel_version(kind='stable'):
 
 
 def get_current_kernel_version():
-    return os.uname().release.split('-', 1)[0]
+    return os.uname().release.split('_', 1)[0]
 
 
 def get_current_kernel_revision():
-    curent_revision = os.uname().release.rsplit('-', 1)[1]
+    current_revision = os.uname().release.rsplit('_', 1)[1]
     if all(x in set(string.digits) for x in current_revision):
         return current_revision
     else:
