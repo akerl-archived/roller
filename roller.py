@@ -273,6 +273,11 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
         if not done:
             raise EnvironmentError('Failed to update /boot/grub/menu.lst')
 
+    def cleanup(self):
+        for archive in os.listdir(self.root_dir + '/archives'):
+            os.remove(self.root_dir + '/archives/' + archive)
+        for source in os.listdir(self.root_dir + '/sources'):
+            shutil.rmtree(self.root_dir + '/sources/' + source)
 
 def easy_roll():
     kernel = Kernel()
