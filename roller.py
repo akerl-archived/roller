@@ -172,7 +172,7 @@ class Kernel(object):
         else:
             testing = ''
 
-        destination = '{0}/archives/linux-{1}.tar.bz2'.format(
+        destination = '{0}/archives/linux-{1}.tar.xz'.format(
             self.root_dir,
             self.version
         )
@@ -199,7 +199,7 @@ class Kernel(object):
     @require_attr('version')
     def extract(self):
         destination = '{0}/sources/'.format(self.root_dir)
-        source = '{0}/archives/linux-{1}.tar.bz2'.format(
+        source = '{0}/archives/linux-{1}.tar.xz'.format(
             self.root_dir,
             self.version
         )
