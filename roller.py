@@ -14,7 +14,11 @@ import subprocess
 import multiprocessing
 import argparse
 import string
+import curses
 
+screen = curses.initscr()
+(_, width) = screen.getmaxyx()
+curses.endwin()
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -24,6 +28,11 @@ def get_args():
         '--version',
         action='version',
         version=VERSION
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='Increase verbosity of output'
     )
     parser.add_argument(
         '-k', '--kernel',
@@ -83,6 +92,32 @@ def get_current_kernel_revision():
         return '0'
 
 
+def progress_bar(current, goal):
+    marker_width = width - 7
+    percent = round(current / goal, 2)
+    mark_count = round(marker_width * percent)
+    text_bar = '{0:3}% [{1}{2}]'.format(
+       int(percent * 100),
+        '*' * mark_count,
+        ' ' * (marker_width - mark_count),
+    )
+    try:
+        print('\r' + text_bar, end='')
+    except:
+        sys.stdout.flush()
+
+
+def download_progress(current_block, block_size, total_size):
+    if current_block % 5 == 0:
+        current_size = min(current_block * block_size, total_size)
+        progress_bar(current_size, total_size)
+
+
+def extract_progress(extracted_count, total_count):
+    if extracted_count % 50 == 0:
+        progress_bar(extracted_count, total_count)
+
+
 def require_attr(attribute):
     def decorator(method):
         @functools.wraps(method)
@@ -96,12 +131,28 @@ def require_attr(attribute):
     return decorator
 
 
+class TarFileWithProgress(tarfile.TarFile):
+    def __init__(self, *args, **kwargs):
+        self.callback = kwargs.pop('callback', None)
+        super().__init__(*args, **kwargs)
+        if self.callback is not None:
+            self._total_count = len(self.getmembers())
+            self._extracted_count = 0
+
+    def extract(self, *args, **kwargs):
+        if self.callback is not None:
+            self.callback(self._extracted_count, self._total_count)
+            self._extracted_count = self._extracted_count + 1
+        super().extract(*args, **kwargs)
+
+
 class Kernel(object):
-    def __init__(self, root_dir=None):
+    def __init__(self, root_dir=None, verbose=True):
         self.version = None
         self.revision = None
         self.config_version = None
         self.config_revision = None
+        self.verbose = verbose
 
         if root_dir is None:
             if len(sys.argv[0]):
@@ -125,6 +176,10 @@ class Kernel(object):
         for config in raw_configs:
             self.existing_configs[config[0]].append((config[1]))
 
+    def log(self, message):
+        if self.verbose:
+            print(message)
+
     @require_attr('version')
     def download(self):
         if self.version[0] == '2':
@@ -136,7 +191,7 @@ class Kernel(object):
         else:
             testing = ''
 
-        destination = '{0}/archives/linux-{1}.tar.bz2'.format(
+        destination = '{0}/archives/linux-{1}.tar.xz'.format(
             self.root_dir,
             self.version
         )
@@ -147,9 +202,15 @@ class Kernel(object):
         )
 
         if os.path.isfile(destination):
+            self.log('Kernel already downloaded: {0}'.format(self.version))
             return
+        self.log('Downloading kernel: {0}'.format(self.version))
+        if self.verbose:
+            hook = download_progress
+        else:
+            hook = None
         try:
-            urllib.request.urlretrieve(source, filename=destination)
+            urllib.request.urlretrieve(source, filename=destination, reporthook=hook)
         except:
             os.remove(destination)
             raise
@@ -157,17 +218,19 @@ class Kernel(object):
     @require_attr('version')
     def extract(self):
         destination = '{0}/sources/'.format(self.root_dir)
-        source = '{0}/archives/linux-{1}.tar.bz2'.format(
+        source = '{0}/archives/linux-{1}.tar.xz'.format(
             self.root_dir,
             self.version
         )
 
         if os.path.isdir('{0}linux-{1}'.format(destination, self.version)):
+            self.log('Kernel already extracted')
             return
         if not os.path.isfile(source):
             raise EnvironmentError('Archived kernel does not exist')
+        self.log('Extracting kernel')
         try:
-            archive = tarfile.open(source)
+            archive = TarFileWithProgress.open(source, callback=extract_progress)
             archive.extractall(destination)
         except:
             shutil.rmtree(
@@ -182,15 +245,21 @@ class Kernel(object):
     @require_attr('config_revision')
     def configure(self, merge_method='oldconfig'):
         os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        self.log('Cleaning your kernel tree')
         try:
             subprocess.call(['make', 'mrproper'], stdout=subprocess.DEVNULL)
         except:
             raise EnvironmentError('Failed to clean your kernel tree')
         if self.config_revision == 'current':
+            self.log('Inserting config from current system kernel')
             with gzip.open('/proc/config.gz') as old_config:
                 with open('.config', 'wb') as new_config:
                     new_config.write(old_config.read())
         else:
+            self.log('Copying saved config: {0}_{1}'.format(
+                self.config_version,
+                self.config_revision,
+            ))
             shutil.copy(
                 '{0}/configs/{1}_{2}'.format(
                     self.root_dir,
@@ -207,13 +276,19 @@ class Kernel(object):
             else:
                 print(line.rstrip())
         if self.config_version != self.version:
+            self.log('Merging your kernel config via "{0}"'.format(merge_method))
             subprocess.call(['make', merge_method])
 
     @require_attr('version')
     @require_attr('revision')
     def modify(self):
         os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        self.log('Running menuconfig')
         subprocess.call(['make', 'menuconfig'])
+        self.log('Saving configuration: {0}_{1}'.format(
+            self.version,
+            self.revision
+        ))
         shutil.copy(
             '.config',
             '{0}/configs/{1}_{2}'.format(
@@ -232,12 +307,14 @@ class Kernel(object):
             stdout = None
         if jobs is None:
             jobs = str(multiprocessing.cpu_count())
+        self.log('Making the kernel')
         subprocess.call(['make', '-j' + jobs], stdout=stdout, stderr=stdout)
 
     @require_attr('version')
     @require_attr('revision')
     def install(self):
         os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        self.log('Installing the kernel image')
         shutil.copy(
             'arch/x86/boot/bzImage',
             '/boot/vmlinuz-{0}_{1}'.format(self.version, self.revision)
@@ -260,10 +337,13 @@ root {3}
 kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
             self.version, self.revision, device, hd)
         if not os.path.isdir('/boot/grub'):
+            self.log('Making /boot/grub')
             os.makedirs('/boot/grub', 0o755, True)
         if not os.path.isfile('/boot/grub/menu.lst'):
+            self.log('Creating initial menu.lst')
             with open('/boot/grub/menu.lst', 'w') as handle:
                 handle.write('timeout 25\ndefault0\n\n#START\n')
+        self.log('Inserting new kernel into menu.lst')
         done = False
         for line in fileinput.input('/boot/grub/menu.lst', inplace=True):
             print(line.rstrip())
@@ -274,14 +354,16 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
             raise EnvironmentError('Failed to update /boot/grub/menu.lst')
 
     def cleanup(self):
+        self.log('Cleaning old archives and sources')
         for archive in os.listdir(self.root_dir + '/archives'):
             os.remove(self.root_dir + '/archives/' + archive)
         for source in os.listdir(self.root_dir + '/sources'):
             shutil.rmtree(self.root_dir + '/sources/' + source)
 
+
 def easy_roll():
-    kernel = Kernel()
     args = get_args()
+    kernel = Kernel(verbose=args.verbose)
 
     kernel.version = args.new_version
     kernel.config_version = args.config_version
