@@ -108,10 +108,14 @@ def progress_bar(current, goal):
 
 
 def download_progress(current_block, block_size, total_size):
-    if current_block % 5 != 0:
-        return
-    current_size = min(current_block * block_size, total_size)
-    progress_bar(current_size, total_size)
+    if current_block % 5 == 0:
+        current_size = min(current_block * block_size, total_size)
+        progress_bar(current_size, total_size)
+
+
+def extract_progress(extracted_count, total_count):
+    if extracted_count % 50 == 0:
+        progress_bar(extracted_count, total_count)
 
 
 def require_attr(attribute):
@@ -125,6 +129,21 @@ def require_attr(attribute):
             method(self, *args, **kwargs)
         return wrapper
     return decorator
+
+
+class TarFileWithProgress(tarfile.TarFile):
+    def __init__(self, *args, **kwargs):
+        self.callback = kwargs.pop('callback', None)
+        super().__init__(*args, **kwargs)
+        if self.callback is not None:
+            self._total_count = len(self.getmembers())
+            self._extracted_count = 0
+
+    def extract(self, *args, **kwargs):
+        if self.callback is not None:
+            self.callback(self._extracted_count, self._total_count)
+            self._extracted_count = self._extracted_count + 1
+        super().extract(*args, **kwargs)
 
 
 class Kernel(object):
@@ -211,9 +230,7 @@ class Kernel(object):
             raise EnvironmentError('Archived kernel does not exist')
         self.log('Extracting kernel')
         try:
-            archive = tarfile.open(source)
-            total_files = len(archive.getmembers())
-            print("Total files: {0}".format(total_files))
+            archive = TarFileWithProgress.open(source, callback=extract_progress)
             archive.extractall(destination)
         except:
             shutil.rmtree(
