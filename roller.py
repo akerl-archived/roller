@@ -16,9 +16,16 @@ import argparse
 import string
 import curses
 
-screen = curses.initscr()
-(_, width) = screen.getmaxyx()
-curses.endwin()
+width = 20
+def set_screen_width():
+    global width
+    try:
+        screen = curses.initscr()
+        (_, width) = screen.getmaxyx()
+        curses.endwin()
+    except:
+        width = 20
+
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -364,6 +371,9 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
 def easy_roll():
     args = get_args()
     kernel = Kernel(verbose=args.verbose)
+
+    if args.verbose:
+        set_screen_width()
 
     kernel.version = args.new_version
     kernel.config_version = args.config_version
