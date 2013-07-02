@@ -349,7 +349,7 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
         if not os.path.isfile('/boot/grub/menu.lst'):
             self.log('Creating initial menu.lst')
             with open('/boot/grub/menu.lst', 'w') as handle:
-                handle.write('timeout 25\ndefault0\n\n#START\n')
+                handle.write('timeout 25\ndefault 0\n\n#START\n')
         self.log('Inserting new kernel into menu.lst')
         done = False
         for line in fileinput.input('/boot/grub/menu.lst', inplace=True):
