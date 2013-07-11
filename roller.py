@@ -17,12 +17,10 @@ import string
 import curses
 
 width = 20
-def set_screen_width():
+def set_screen_width(screen):
     global width
     try:
-        screen = curses.initscr()
         (_, width) = screen.getmaxyx()
-        curses.endwin()
     except:
         width = 20
 
@@ -373,7 +371,7 @@ def easy_roll():
     kernel = Kernel(verbose=args.verbose)
 
     if args.verbose:
-        set_screen_width()
+        curses.wrapper(set_screen_width)
 
     kernel.version = args.new_version
     kernel.config_version = args.config_version
