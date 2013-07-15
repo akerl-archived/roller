@@ -234,8 +234,12 @@ class Kernel(object):
         if not os.path.isfile(source):
             raise EnvironmentError('Archived kernel does not exist')
         self.log('Extracting kernel')
+        if self.verbose:
+            callback = extract_progress
+        else:
+            callback = None
         try:
-            archive = TarFileWithProgress.open(source, callback=extract_progress)
+            archive = TarFileWithProgress.open(source, callback=callback)
             archive.extractall(destination)
         except:
             shutil.rmtree(
