@@ -14,7 +14,8 @@ import subprocess
 import multiprocessing
 import argparse
 import string
-import curses
+import random
+import time
 
 width = shutil.get_terminal_size((20,0)).columns
 
@@ -310,7 +311,17 @@ class Kernel(object):
         if jobs is None:
             jobs = str(multiprocessing.cpu_count())
         self.log('Making the kernel')
-        subprocess.call(['make', '-j' + jobs], stdout=stdout, stderr=stdout)
+        make_process = subprocess.Popen(
+            ['make', '-j' + jobs],
+            stdout=stdout,
+            stderr=stdout,
+        )
+        while make_process.poll() is None:
+            progress_bar(random.randint(1, 99), 100)
+            time.sleep(1)
+        if make_process.returncode != 0:
+            print('Failed to make kernel')
+            raise SystemExit
 
     @require_attr('version')
     @require_attr('revision')
