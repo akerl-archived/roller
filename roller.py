@@ -317,7 +317,8 @@ class Kernel(object):
             stderr=stdout,
         )
         while make_process.poll() is None:
-            progress_bar(random.randint(1, 99), 100)
+            if self.verbose:
+                progress_bar(random.randint(1, 99), 100)
             time.sleep(1)
         if make_process.returncode != 0:
             print('Failed to make kernel')
