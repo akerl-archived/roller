@@ -329,6 +329,8 @@ class Kernel(object):
     def install(self):
         os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
         self.log('Installing the kernel image')
+        if not os.path.isdir('/boot'):
+            os.makedirs('/boot', 0o755, True)
         shutil.copy(
             'arch/x86/boot/bzImage',
             '/boot/vmlinuz-{0}_{1}'.format(self.version, self.revision)
