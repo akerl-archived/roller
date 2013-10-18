@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = '0.3.5'
+VERSION = '0.3.6'
 
 import os
 import sys
@@ -64,6 +64,12 @@ def get_args():
         dest='skip_install',
         action='store_true',
         help='Do not install kernel to /boot'
+    )
+    parser.add_argument(
+        '-p', '--patch',
+        dest='patch',
+        action='store_true',
+        help='Open a shell before configuration to allow patching of the kernel tree'
     )
     return parser.parse_args()
 
@@ -407,6 +413,9 @@ def easy_roll():
 
     kernel.download()
     kernel.extract()
+    if args.patch:
+        print('Dropping you into a bash shell for patching; `exit` to continue rolling')
+        system('bash')
     kernel.configure()
     if modify:
         kernel.modify()
