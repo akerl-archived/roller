@@ -12,5 +12,6 @@ setup(
     author_email='me@lesaker.org',
     url='https://github.com/akerl/roller',
     py_modules=['roller'],
+    scripts=['roller.py'],
 )
 
