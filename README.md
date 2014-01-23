@@ -1,6 +1,8 @@
 roller
 =========
 
+[![Latest Version](https://pypip.in/v/roller/badge.png)](https://pypi.python.org/pypi/roller/)
+
 Roller provides a pythonic Kernel object for configuring and compiling kernels, and a streamlined command line tool for using that object
 
 ## Usage
