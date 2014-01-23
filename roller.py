@@ -17,7 +17,8 @@ import string
 import random
 import time
 
-width = shutil.get_terminal_size((20,0)).columns
+width = shutil.get_terminal_size((20, 0)).columns
+
 
 def get_args():
     parser = argparse.ArgumentParser(
@@ -69,8 +70,23 @@ def get_args():
         '-p', '--patch',
         dest='patch',
         action='store_true',
-        help='Open a shell before configuration to allow patching of the kernel tree'
+        help='Open a shell before configuration to allow patching'
     )
+    parser.add_argument(
+        '-b', '--build-dir',
+        dest='build_dir',
+        type=str,
+        default='/tmp',
+        help='directory for downloading, extracting, and building the kernel'
+    )
+    parser.add_argument(
+        '-d', '--config-dir',
+        dest='config_dir',
+        type=str,
+        default='/opt/kernels',
+        help='directory for kernel configs'
+    )
+
     return parser.parse_args()
 
 
@@ -102,7 +118,7 @@ def progress_bar(current, goal):
     percent = round(current / goal, 2)
     mark_count = round(marker_width * percent)
     text_bar = '{0:3}% [{1}{2}]'.format(
-       int(percent * 100),
+        int(percent * 100),
         '*' * mark_count,
         ' ' * (marker_width - mark_count),
     )
@@ -152,27 +168,31 @@ class TarFileWithProgress(tarfile.TarFile):
 
 
 class Kernel(object):
-    def __init__(self, root_dir=None, verbose=True):
+    def __init__(self, build_dir=None, config_dir=None, verbose=True):
         self.version = None
         self.revision = None
         self.config_version = None
         self.config_revision = None
         self.verbose = verbose
 
-        if root_dir is None:
-            if len(sys.argv[0]):
-                os.chdir(os.path.dirname(sys.argv[0]))
-            self.root_dir = os.getcwd()
+        if build_dir is None:
+            self.build_dir = os.path.dirname(sys.argv[0])
         else:
-            self.root_dir = os.path.expanduser(root_dir.rstrip('/'))
-            os.chdir(self.root_dir)
+            self.build_dir = os.path.expanduser(build_dir.rstrip('/'))
+        self.build_dir = os.path.abspath(self.build_dir)
 
-        for subdir in ['/sources', '/archives', '/configs']:
-            os.makedirs(self.root_dir + subdir, 0o755, True)
+        if config_dir is None:
+            self.config_dir = './configs'
+        else:
+            self.config_dir = os.path.expanduser(config_dir.rstrip('/'))
+        self.config_dir = os.path.abspat(self.config_dir)
+
+        for subdir in ['/sources', '/archives']:
+            os.makedirs(self.build_dir + subdir, 0o755, True)
 
         raw_configs = [
             x.split('_')
-            for x in os.listdir(self.root_dir + '/configs')
+            for x in os.listdir(self.config_dir)
             if '_' in x
         ]
         self.existing_configs = {
@@ -197,10 +217,12 @@ class Kernel(object):
             testing = ''
 
         destination = '{0}/archives/linux-{1}.tar.xz'.format(
-            self.root_dir,
+            self.build_dir,
             self.version
         )
-        source = 'http://www.kernel.org/pub/linux/kernel/v{0}/{1}linux-{2}.tar.xz'.format(
+        base_url = 'http://www.kernel.org/pub/linux/kernel'
+        source = '{0}/v{1}/{2}linux-{3}.tar.xz'.format(
+            base_url,
             major,
             testing,
             self.version
@@ -215,16 +237,20 @@ class Kernel(object):
         else:
             hook = None
         try:
-            urllib.request.urlretrieve(source, filename=destination, reporthook=hook)
+            urllib.request.urlretrieve(
+                source,
+                filename=destination,
+                reporthook=hook
+            )
         except:
             os.remove(destination)
             raise
 
     @require_attr('version')
     def extract(self):
-        destination = '{0}/sources/'.format(self.root_dir)
+        destination = '{0}/sources/'.format(self.build_dir)
         source = '{0}/archives/linux-{1}.tar.xz'.format(
-            self.root_dir,
+            self.build_dir,
             self.version
         )
 
@@ -253,7 +279,7 @@ class Kernel(object):
     @require_attr('config_version')
     @require_attr('config_revision')
     def configure(self, merge_method='oldconfig'):
-        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Cleaning your kernel tree')
         try:
             subprocess.call(['make', 'mrproper'], stdout=subprocess.DEVNULL)
@@ -270,8 +296,8 @@ class Kernel(object):
                 self.config_revision,
             ))
             shutil.copy(
-                '{0}/configs/{1}_{2}'.format(
-                    self.root_dir,
+                '{0}/{1}_{2}'.format(
+                    self.config_dir,
                     self.config_version,
                     self.config_revision
                 ),
@@ -285,13 +311,15 @@ class Kernel(object):
             else:
                 print(line.rstrip())
         if self.config_version != self.version:
-            self.log('Merging your kernel config via "{0}"'.format(merge_method))
+            self.log('Merging your kernel config via "{0}"'.format(
+                merge_method)
+            )
             subprocess.call(['make', merge_method])
 
     @require_attr('version')
     @require_attr('revision')
     def modify(self):
-        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Running menuconfig')
         subprocess.call(['make', 'menuconfig'])
         self.log('Saving configuration: {0}_{1}'.format(
@@ -300,8 +328,8 @@ class Kernel(object):
         ))
         shutil.copy(
             '.config',
-            '{0}/configs/{1}_{2}'.format(
-                self.root_dir,
+            '{0}/{1}_{2}'.format(
+                self.config_dir,
                 self.version,
                 self.revision,
             ),
@@ -309,7 +337,7 @@ class Kernel(object):
 
     @require_attr('version')
     def make(self, jobs=None, background=True):
-        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         if background:
             stdout = subprocess.DEVNULL
         else:
@@ -333,7 +361,7 @@ class Kernel(object):
     @require_attr('version')
     @require_attr('revision')
     def install(self):
-        os.chdir('{0}/sources/linux-{1}'.format(self.root_dir, self.version))
+        os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Installing the kernel image')
         if not os.path.isdir('/boot'):
             os.makedirs('/boot', 0o755, True)
@@ -375,17 +403,26 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
         if not done:
             raise EnvironmentError('Failed to update /boot/grub/menu.lst')
 
+    def where(self):
+        print('{0}/sources/linux-{1}/arch/x86/boot/bzImage'.format(
+            self.build_dir, self.version
+        ))
+
     def cleanup(self):
         self.log('Cleaning old archives and sources')
-        for archive in os.listdir(self.root_dir + '/archives'):
-            os.remove(self.root_dir + '/archives/' + archive)
-        for source in os.listdir(self.root_dir + '/sources'):
-            shutil.rmtree(self.root_dir + '/sources/' + source)
+        for archive in os.listdir(self.build_dir + '/archives'):
+            os.remove(self.build_dir + '/archives/' + archive)
+        for source in os.listdir(self.build_dir + '/sources'):
+            shutil.rmtree(self.build_dir + '/sources/' + source)
 
 
 def easy_roll():
     args = get_args()
-    kernel = Kernel(verbose=args.verbose)
+    kernel = Kernel(
+        build_dir=args.build_dir,
+        config_dir=args.config_dir,
+        verbose=args.verbose
+    )
 
     kernel.version = args.new_version
     kernel.config_version = args.config_version
@@ -414,15 +451,16 @@ def easy_roll():
     kernel.download()
     kernel.extract()
     if args.patch:
-        print('Dropping you into a bash shell for patching; `exit` to continue rolling')
+        print('Dropping into a bash shell for patching; `exit` to continue')
         system('bash')
     kernel.configure()
     if modify:
         kernel.modify()
     kernel.make()
-    if not args.skip_install:
+    if args.skip_install:
+        kernel.where()
+    else:
         kernel.install()
 
 if __name__ == '__main__':
     easy_roll()
-
