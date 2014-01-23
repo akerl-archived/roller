@@ -83,7 +83,7 @@ def get_args():
         '-d', '--config-dir',
         dest='config_dir',
         type=str,
-        default='/opt/kernels',
+        default=None,
         help='directory for kernel configs'
     )
 
