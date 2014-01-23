@@ -185,7 +185,7 @@ class Kernel(object):
             self.config_dir = './configs'
         else:
             self.config_dir = os.path.expanduser(config_dir.rstrip('/'))
-        self.config_dir = os.path.abspat(self.config_dir)
+        self.config_dir = os.path.abspath(self.config_dir)
 
         for subdir in ['/sources', '/archives']:
             os.makedirs(self.build_dir + subdir, 0o755, True)
