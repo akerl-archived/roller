@@ -8,7 +8,7 @@ script:
 - pep8 .
 - nosetests --with-coverage --cover-package=roller
 after_succcess:
-- coverage
+- coveralls
 notifications:
   email: false
   irc:
