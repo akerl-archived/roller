@@ -14,4 +14,3 @@ setup(
     py_modules=['roller'],
     scripts=['roller.py'],
 )
-

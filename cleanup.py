@@ -10,4 +10,3 @@ else:
 
 kernel = roller.Kernel(root_dir)
 kernel.cleanup()
-

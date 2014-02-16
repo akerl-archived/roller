@@ -6,8 +6,6 @@ roller
 [![Build Status](https://img.shields.io/travis/akerl/roller.svg)](https://travis-ci.org/akerl/roller)
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://tldrlegal.com/license/mit-license)
 
-[![Latest Version](https://pypip.in/v/roller/badge.png)](https://pypi.python.org/pypi/roller/)
-
 Roller provides a pythonic Kernel object for configuring and compiling kernels, and a streamlined command line tool for using that object
 
 ## Usage
