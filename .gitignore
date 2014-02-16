@@ -6,3 +6,4 @@ archives/
 dist/*
 build/*
 __pycache__/
+.coverage
