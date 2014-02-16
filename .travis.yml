@@ -7,7 +7,7 @@ install:
 script:
 - pep8 .
 - nosetests --with-coverage --cover-package=roller
-after_succcess:
+after_success:
 - coveralls
 notifications:
   email: false
