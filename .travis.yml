@@ -6,7 +6,6 @@ python:
 install:
 - pip install -r requirements.txt
 script:
-- which nosetests
-- coverage run --source=roller nosetests
+- coverage run --source=roller $(which nosetests)
 after_success:
 - coveralls
