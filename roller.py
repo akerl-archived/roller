@@ -22,6 +22,7 @@ try:
 except AttributeError:
     width = 40
 
+
 def get_args():
     parser = argparse.ArgumentParser(
         description='Simplified kernel rolling tool'

@@ -5,9 +5,8 @@ python:
 install:
 - pip install -r requirements.txt
 script:
-- coverage run --source=roller $(which nosetests)
-after_success:
-- coveralls
+- pep8 .
+- nosetests --cover --cover-package=roller
 notifications:
   email: false
   irc:
