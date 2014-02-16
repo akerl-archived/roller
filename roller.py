@@ -17,8 +17,10 @@ import string
 import random
 import time
 
-width = shutil.get_terminal_size((20, 0)).columns
-
+try:
+    width = shutil.get_terminal_size((40, 0)).columns
+except AttributeError:
+    width = 40
 
 def get_args():
     parser = argparse.ArgumentParser(
