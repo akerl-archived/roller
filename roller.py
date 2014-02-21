@@ -123,10 +123,14 @@ def get_current_kernel_revision():
         return '0'
 
 
+def devnull():
+    return open(os.devnull, 'w')
+
+
 def progress_bar(current, goal):
     marker_width = width - 7
     percent = round(current / goal, 2)
-    mark_count = round(marker_width * percent)
+    mark_count = int(round(marker_width * percent))
     text_bar = '{0:3}% [{1}{2}]'.format(
         int(percent * 100),
         '*' * mark_count,
@@ -198,7 +202,8 @@ class Kernel(object):
         self.config_dir = os.path.abspath(self.config_dir)
 
         for subdir in ['/sources', '/archives']:
-            os.makedirs(self.build_dir + subdir, 0o755, True)
+            if not os.path.isdir(self.build_dir + subdir):
+                os.makedirs(self.build_dir + subdir, 0o755)
 
         raw_configs = [
             x.split('_')
@@ -292,7 +297,7 @@ class Kernel(object):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Cleaning your kernel tree')
         try:
-            subprocess.call(['make', 'mrproper'], stdout=subprocess.DEVNULL)
+            subprocess.call(['make', 'mrproper'], stdout=devnull())
         except:
             raise EnvironmentError('Failed to clean your kernel tree')
         if self.config_revision == 'current':
@@ -349,7 +354,7 @@ class Kernel(object):
     def make(self, jobs=None, background=True):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         if background:
-            stdout = subprocess.DEVNULL
+            stdout = devnull()
         else:
             stdout = None
         if jobs is None:
