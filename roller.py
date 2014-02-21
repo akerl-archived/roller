@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from __future__ import print_function
 
 VERSION = '0.4.3'
 
@@ -7,7 +8,6 @@ import sys
 import shutil
 import fileinput
 import functools
-import urllib.request
 import tarfile
 import gzip
 import subprocess
@@ -16,6 +16,13 @@ import argparse
 import string
 import random
 import time
+from contextlib import closing
+
+try:
+    from urllib.request import urlopen, urlretrieve
+except ImportError:
+    from urllib2 import urlopen
+    from urllib import urlretrieve
 
 try:
     width = shutil.get_terminal_size((40, 0)).columns
@@ -96,16 +103,16 @@ def get_args():
 def get_latest_kernel_version(kind='stable'):
     kernel_url = 'https://www.kernel.org/finger_banner'
     search_string = 'The latest {0}'.format(kind)
-    with urllib.request.urlopen(kernel_url) as handle:
+    with closing(urlopen(kernel_url)) as handle:
         for raw_line in handle.readlines():
-            line = str(raw_line, encoding='utf8').rstrip('\n')
+            line = str(raw_line).rstrip('\n')
             if search_string in line:
                 return line.rstrip(' (EOL)').rsplit(' ', 1)[1]
     raise LookupError('Could not find the latest {0} kernel'.format(kind))
 
 
 def get_current_kernel_version():
-    return os.uname().release.split('_', 1)[0]
+    return os.uname()[2].split('_', 1)[0]
 
 
 def get_current_kernel_revision():
@@ -240,7 +247,7 @@ class Kernel(object):
         else:
             hook = None
         try:
-            urllib.request.urlretrieve(
+            urlretrieve(
                 source,
                 filename=destination,
                 reporthook=hook
