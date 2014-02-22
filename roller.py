@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '0.4.3'
+VERSION = '0.4.4'
 
 import os
 import sys
