@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '0.4.5'
+VERSION = '0.4.6'
 
 import os
 import sys
@@ -105,9 +105,9 @@ def get_latest_kernel_version(kind='stable'):
     search_string = 'The latest {0}'.format(kind)
     with closing(urlopen(kernel_url)) as handle:
         for raw_line in handle.readlines():
-            line = str(raw_line).rstrip('\n')
+            line = raw_line.decode('utf-8').rstrip('\n')
             if search_string in line:
-                return line.rstrip(' (EOL)').rsplit(' ', 1)[1]
+                return str(line.rstrip(' (EOL)').rsplit(' ', 1)[1])
     raise LookupError('Could not find the latest {0} kernel'.format(kind))
 
 
