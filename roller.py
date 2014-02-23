@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '0.4.4'
+VERSION = '0.4.5'
 
 import os
 import sys
@@ -196,7 +196,7 @@ class Kernel(object):
         self.build_dir = os.path.abspath(self.build_dir)
 
         if config_dir is None:
-            self.config_dir = './configs'
+            self.config_dir = self.build_dir + '/configs'
         else:
             self.config_dir = os.path.expanduser(config_dir.rstrip('/'))
         self.config_dir = os.path.abspath(self.config_dir)
