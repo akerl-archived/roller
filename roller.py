@@ -384,12 +384,15 @@ class Kernel(object):
             'arch/x86/boot/bzImage',
             '/boot/vmlinuz-{0}_{1}'.format(self.version, self.revision)
         )
-        with open('/etc/fstab') as handle:
-            device = [
-                x.split()[0]
-                for x in handle.readlines()
-                if 'ext' in x
-            ][0]
+        try:
+            with open('/etc/fstab') as handle:
+                device = [
+                    x.split()[0]
+                    for x in handle.readlines()
+                    if 'ext' in x
+                ][0]
+        except IndexError:
+            device = '/dev/xvda'
         try:
             int(device[-1])
         except ValueError:
