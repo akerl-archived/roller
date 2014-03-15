@@ -233,12 +233,12 @@ class Kernel(object):
         else:
             testing = ''
 
-        destination = '{0}/archives/linux-{1}.tar.xz'.format(
+        destination = '{0}/archives/linux-{1}.tar.gz'.format(
             self.build_dir,
             self.version
         )
         base_url = 'http://www.kernel.org/pub/linux/kernel'
-        source = '{0}/v{1}/{2}linux-{3}.tar.xz'.format(
+        source = '{0}/v{1}/{2}linux-{3}.tar.gz'.format(
             base_url,
             major,
             testing,
@@ -266,7 +266,7 @@ class Kernel(object):
     @require_attr('version')
     def extract(self):
         destination = '{0}/sources/'.format(self.build_dir)
-        source = '{0}/archives/linux-{1}.tar.xz'.format(
+        source = '{0}/archives/linux-{1}.tar.gz'.format(
             self.build_dir,
             self.version
         )
@@ -283,11 +283,7 @@ class Kernel(object):
             callback = None
         try:
             print("Trying to open {0}".format(source))
-            archive = TarFileWithProgress.open(
-                source,
-                mode="r:xz",
-                callback=callback
-            )
+            archive = TarFileWithProgress.open(source, callback=callback)
             archive.extractall(destination)
         except:
             shutil.rmtree(
