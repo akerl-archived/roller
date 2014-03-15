@@ -52,4 +52,3 @@ class TestRoller:
     def test_cleanup(self):
         kernel = roller.Kernel()
         kernel.cleanup()
-
