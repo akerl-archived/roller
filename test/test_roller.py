@@ -3,5 +3,6 @@ import roller
 
 
 class TestRoller:
-    def test_dummy(self):
-        pass
+    def test_easyroll(self):
+        roller.easy_roll(['-s'])
+

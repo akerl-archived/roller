@@ -30,7 +30,7 @@ except AttributeError:
     width = 40
 
 
-def get_args():
+def get_args(raw_args):
     parser = argparse.ArgumentParser(
         description='Simplified kernel rolling tool'
     )
@@ -97,7 +97,7 @@ def get_args():
         help='directory for kernel configs'
     )
 
-    return parser.parse_args()
+    return parser.parse_args(raw_args)
 
 
 def get_latest_kernel_version(kind='stable'):
@@ -434,8 +434,8 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
             shutil.rmtree(self.build_dir + '/sources/' + source)
 
 
-def easy_roll():
-    args = get_args()
+def easy_roll(raw_args):
+    args = get_args(raw_args)
     kernel = Kernel(
         build_dir=args.build_dir,
         config_dir=args.config_dir,
@@ -481,4 +481,4 @@ def easy_roll():
         kernel.install()
 
 if __name__ == '__main__':
-    easy_roll()
+    easy_roll(sys.argv)
