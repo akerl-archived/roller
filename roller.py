@@ -116,7 +116,10 @@ def get_current_kernel_version():
 
 
 def get_current_kernel_revision():
-    current_revision = os.uname().release.rsplit('_', 1)[1]
+    current_kernel = os.uname().release.rsplit('_', 1)
+    if len(current_kernel) < 2:
+        return '0'
+    current_revision = current_kernel[1]
     if all(x in set(string.digits) for x in current_revision):
         return current_revision
     else:

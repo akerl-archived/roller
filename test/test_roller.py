@@ -40,8 +40,10 @@ class TestRoller:
         assert len(roller.get_current_kernel_version().split('.')) > 1
 
     def test_get_current_kernel_revision(self):
-        pass  # TODO: make this test work on Mac or Linux
+        assert roller.get_current_kernel_revision() == '0'
 
     def test_easyroll(self):
-        args = ['-v', '-s', '-k', '3.13.6', '-c', '3.13.6', '-r', '1']
+        arg_sets = [
+            ['-v', '-k', '3.13.6', '-c', '3.13.6', '-r', '1']
+        ]
         roller.easy_roll(args)
