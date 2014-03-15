@@ -37,7 +37,7 @@ class TestRoller:
         assert 'rc' in mainline
 
     def test_get_current_kernel_version(self):
-        assert len(roller.get_current_kernel_version().split('.')) in [2, 3]
+        assert len(roller.get_current_kernel_version().split('.')) > 1
 
     def test_get_current_kernel_revision(self):
         pass  # TODO: make this test work on Mac or Linux
