@@ -2,6 +2,7 @@ import unittest
 import nose
 import roller
 
+
 class TestRoller:
     def test_defaults(self):
         defaults = roller.get_args([])
@@ -13,9 +14,11 @@ class TestRoller:
         assert defaults.skip_install is False
         assert defaults.build_dir == '/tmp'
         assert defaults.config_dir is None
+
     @nose.tools.raises(SystemExit)
     def test_version(self):
         assert roller.get_args(['--version'])
+
     def test_arguments(self):
         assert roller.get_args(['-v']).verbose is True
         assert roller.get_args(['-k', '1.2.3']).new_version == '1.2.3'
@@ -25,15 +28,20 @@ class TestRoller:
         assert roller.get_args(['-s']).skip_install is True
         assert roller.get_args(['-b', '/foo']).build_dir == '/foo'
         assert roller.get_args(['-d', '/bar']).config_dir == '/bar'
+
     def test_get_latest_kernel_version(self):
         stable = roller.get_latest_kernel_version(kind='stable')
         longterm = roller.get_latest_kernel_version(kind='longterm')
         mainline = roller.get_latest_kernel_version(kind='mainline')
         assert stable != longterm
         assert 'rc' in mainline
+
     def test_get_current_kernel_version(self):
         assert len(roller.get_current_kernel_version().split('.')) in [2, 3]
+
     def test_get_current_kernel_revision(self):
-        pass # TODO: make this test work on Mac or Linux
+        pass  # TODO: make this test work on Mac or Linux
+
     def test_easyroll(self):
-        roller.easy_roll(['-v', '-s', '-k', '3.13.6', '-n', '1', '-c', '3.13.6', '-r', '1'])
+        args = ['-v', '-s', '-k', '3.13.6', '-c', '3.13.6', '-r', '1']
+        roller.easy_roll(args)
