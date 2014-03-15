@@ -200,6 +200,7 @@ class Kernel(object):
         else:
             self.config_dir = os.path.expanduser(config_dir.rstrip('/'))
         self.config_dir = os.path.abspath(self.config_dir)
+        os.makedirs(self.config_dir, 0o755)
 
         for subdir in ['/sources', '/archives']:
             if not os.path.isdir(self.build_dir + subdir):
