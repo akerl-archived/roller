@@ -36,4 +36,4 @@ class TestRoller:
     def test_get_current_kernel_revision(self):
         pass # TODO: make this test work on Mac or Linux
     def test_easyroll(self):
-        roller.easy_roll(['-v', '-s'])
+        roller.easy_roll(['-v', '-s', '-k', '3.13.6', '-n', '1', '-c', '3.13.6', '-r', '1'])

@@ -4,11 +4,10 @@ python:
 - 3.3
 install:
 - pip install -r requirements.txt
+- git clone git://github.com/akerl/kernels /tmp/configs
 script:
 - pep8 .
-- ./roller.py -s -v
-- ls -la /tmp/*
-#- nosetests --with-coverage --cover-package=roller
+- nosetests --with-coverage --cover-package=roller
 after_success:
 - coveralls
 notifications:
@@ -16,6 +15,5 @@ notifications:
   irc:
     channels:
       - secure: e1grSUINcXdm/tmgI+bwjz71+eHyZanT8n/IFkDaU8r/uNhrDXsahHLI8I+dnDFSv/MU4CELDXu58QOOOEu9Sogcx4eb9DvixxLcefhpZAuOTCmogqDFLt+MKZSG/mMzKR4VtkK/X2huOC1+MSwfKB2qS/d7VOS49zmLYO+MyTU=
-    channel_key: sekrit
     template:
     - "%{repository}/%{branch}/%{build_number}: %{message} -- %{build_url}"
