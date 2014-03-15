@@ -46,4 +46,5 @@ class TestRoller:
         arg_sets = [
             ['-v', '-k', '3.13.6', '-c', '3.13.6', '-r', '1']
         ]
-        roller.easy_roll(args)
+        for args in arg_sets:
+            roller.easy_roll(args)
