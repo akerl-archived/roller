@@ -282,6 +282,7 @@ class Kernel(object):
         else:
             callback = None
         try:
+            print("Trying to open {0}".format(source))
             archive = TarFileWithProgress.open(source, callback=callback)
             archive.extractall(destination)
         except:
