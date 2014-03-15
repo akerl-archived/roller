@@ -50,4 +50,6 @@ class TestRoller:
             roller.easy_roll(args)
 
     def test_cleanup(self):
-        roller.cleanup()
+        kernel = roller.Kernel()
+        kernel.cleanup()
+
