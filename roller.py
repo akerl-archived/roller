@@ -200,7 +200,8 @@ class Kernel(object):
         else:
             self.config_dir = os.path.expanduser(config_dir.rstrip('/'))
         self.config_dir = os.path.abspath(self.config_dir)
-        os.makedirs(self.config_dir, 0o755)
+        if not os.path.isdir(self.config_dir):
+            os.makedirs(self.config_dir, 0o755)
 
         for subdir in ['/sources', '/archives']:
             if not os.path.isdir(self.build_dir + subdir):
@@ -482,4 +483,4 @@ def easy_roll(raw_args):
         kernel.install()
 
 if __name__ == '__main__':
-    easy_roll(sys.argv)
+    easy_roll(sys.argv[1:])
