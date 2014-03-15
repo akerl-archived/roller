@@ -283,7 +283,11 @@ class Kernel(object):
             callback = None
         try:
             print("Trying to open {0}".format(source))
-            archive = TarFileWithProgress.open(source, callback=callback)
+            archive = TarFileWithProgress.open(
+                source,
+                mode="r:xz",
+                callback=callback
+            )
             archive.extractall(destination)
         except:
             shutil.rmtree(
