@@ -48,3 +48,6 @@ class TestRoller:
         ]
         for args in arg_sets:
             roller.easy_roll(args)
+
+    def test_cleanup(self):
+        roller.cleanup()
