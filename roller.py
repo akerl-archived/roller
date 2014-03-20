@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '0.4.8'
+VERSION = '0.4.9'
 
 import os
 import sys
@@ -285,7 +285,7 @@ class Kernel(object):
         else:
             callback = None
         try:
-            print("Trying to open {0}".format(source))
+            self.log("Trying to open {0}".format(source))
             archive = TarFileWithProgress.open(source, callback=callback)
             archive.extractall(destination)
         except:
