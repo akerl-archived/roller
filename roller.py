@@ -475,6 +475,7 @@ def easy_roll(raw_args):
     kernel.extract()
     if args.patch:
         print('Dropping into a bash shell for patching; `exit` to continue')
+        os.chdir('{0}/sources/linux-{1}'.format(kernel.build_dir, kernel.version))
         os.system('bash')
     kernel.configure()
     if modify:
