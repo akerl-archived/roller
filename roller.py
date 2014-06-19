@@ -476,7 +476,7 @@ def easy_roll(raw_args):
     kernel.extract()
     if args.patch:
         print('Dropping into a bash shell for patching; `exit` to continue')
-        system('bash')
+        os.system('bash')
     kernel.configure()
     if modify:
         kernel.modify()
