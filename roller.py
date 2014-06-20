@@ -79,7 +79,7 @@ def get_args(raw_args):
     parser.add_argument(
         '-p', '--patch',
         dest='patch',
-        action='store_true',
+        action='append'
         help='Open a shell before configuration to allow patching'
     )
     parser.add_argument(
@@ -96,7 +96,6 @@ def get_args(raw_args):
         default=None,
         help='directory for kernel configs'
     )
-
     return parser.parse_args(raw_args)
 
 
