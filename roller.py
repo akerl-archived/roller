@@ -78,7 +78,7 @@ def get_args(raw_args):
     )
     parser.add_argument(
         '-p', '--patch',
-        dest='patch',
+        dest='patches',
         action='append'
         help='Open a shell before configuration to allow patching'
     )
