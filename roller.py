@@ -294,6 +294,12 @@ class Kernel(object):
             raise
 
     @require_attr('version')
+    def patch(self, patch_script):
+        os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
+        self.log('Applying patch: {0}'.format(patch_script))
+        subprocess.call([patch_script])
+
+    @require_attr('version')
     @require_attr('revision')
     @require_attr('config_version')
     @require_attr('config_revision')
@@ -472,10 +478,9 @@ def easy_roll(raw_args):
 
     kernel.download()
     kernel.extract()
-    if args.patch:
-        print('Dropping into a bash shell for patching; `exit` to continue')
-        os.chdir('{0}/sources/linux-{1}'.format(kernel.build_dir, kernel.version))
-        os.system('bash')
+    if args.patches:
+        for patch in args.patches:
+            kernel.patch(patch)
     kernel.configure()
     if modify:
         kernel.modify()
