@@ -126,10 +126,10 @@ def get_current_kernel_revision():
         return '0'
 
 
-def run_patches(patches):
-    for patch in args.patches:
+def run_patches(kernel, patches):
+    for patch in patches:
         if os.path.isdir(patch):
-            run_patches(glob.glob('{0}/*'.format(patch)))
+            run_patches(kernel, glob.glob('{0}/*'.format(patch)))
         elif os.access(patch, os.X_OK):
             kernel.patch(patch)
 
@@ -488,7 +488,7 @@ def easy_roll(raw_args):
     kernel.download()
     kernel.extract()
     if args.patches:
-        run_patches()
+        run_patches(kernel, args.patches)
     kernel.configure()
     if modify:
         kernel.modify()
