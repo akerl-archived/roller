@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '0.4.10'
+VERSION = '0.4.12'
 
 import os
 import sys
+import glob
 import shutil
 import fileinput
 import functools
@@ -123,6 +124,14 @@ def get_current_kernel_revision():
         return current_revision
     else:
         return '0'
+
+
+def run_patches(patches):
+    for patch in args.patches:
+        if os.path.isdir(patch):
+            run_patches(glob.glob('{0}/*'.format(patch)))
+        elif os.access(patch, os.X_OK):
+            kernel.patch(patch)
 
 
 def devnull():
@@ -479,8 +488,7 @@ def easy_roll(raw_args):
     kernel.download()
     kernel.extract()
     if args.patches:
-        for patch in args.patches:
-            kernel.patch(patch)
+        run_patches()
     kernel.configure()
     if modify:
         kernel.modify()
