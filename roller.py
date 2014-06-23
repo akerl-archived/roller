@@ -370,23 +370,22 @@ class Kernel(object):
         )
 
     @require_attr('version')
-    def make(self, jobs=None, background=True):
+    def make(self, jobs=None):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
-        if background:
-            stdout = devnull()
-        else:
-            stdout = None
+        cap = len(open('.config').readlines())
         if jobs is None:
             jobs = str(multiprocessing.cpu_count())
         self.log('Making the kernel')
         make_process = subprocess.Popen(
             ['make', '-j' + jobs],
-            stdout=stdout,
-            stderr=stdout,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        while make_process.poll() is None:
+        counter = 0
+        while make_process.stdout.readline()() is None:
             if self.verbose:
-                progress_bar(random.randint(1, 99), 100)
+                counter += 1
+                progress_bar(counter, cap)
             time.sleep(1)
         if make_process.returncode != 0:
             print('Failed to make kernel')
