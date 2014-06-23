@@ -382,7 +382,7 @@ class Kernel(object):
             stderr=subprocess.PIPE,
         )
         counter = 0
-        while make_process.stdout.readline()() is None:
+        while len(make_process.stdout.readline()):
             if self.verbose:
                 counter += 1
                 progress_bar(counter, cap)
