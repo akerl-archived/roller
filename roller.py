@@ -387,6 +387,8 @@ class Kernel(object):
                 counter += 1
                 progress_bar(counter, cap)
             time.sleep(1)
+        while make_process.poll() is None:
+            time.sleep(1)
         if make_process.returncode != 0:
             print('Failed to make kernel')
             raise SystemExit
