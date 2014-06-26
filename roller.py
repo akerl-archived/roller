@@ -307,7 +307,7 @@ class Kernel(object):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Applying patch: {0}'.format(patch_script))
         resp = subprocess.call([patch_script])
-        if resp != 0
+        if resp != 0:
             raise EnvironmentError('Command failed: {0}'.format(patch_script))
 
 
