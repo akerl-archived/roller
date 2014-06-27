@@ -310,7 +310,6 @@ class Kernel(object):
         if resp != 0:
             raise EnvironmentError('Command failed: {0}'.format(patch_script))
 
-
     @require_attr('version')
     @require_attr('revision')
     @require_attr('config_version')
@@ -385,12 +384,13 @@ class Kernel(object):
             stderr=subprocess.PIPE,
         )
         counter = 0
-        while len(make_process.stdout.readline()):
-            if self.verbose:
+        while True:
+            if make_process.poll() is not None:
+                break
+            line = make_process.stdout.readline()
+            if self_verbose and len(line):
                 counter += 1
                 progress_bar(counter, cap)
-            time.sleep(1)
-        while make_process.poll() is None:
             time.sleep(1)
         if make_process.returncode != 0:
             print('Failed to make kernel')
