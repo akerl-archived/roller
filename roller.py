@@ -388,7 +388,7 @@ class Kernel(object):
             if make_process.poll() is not None:
                 break
             line = make_process.stdout.readline()
-            if self_verbose and len(line):
+            if self.verbose and len(line):
                 counter += 1
                 progress_bar(counter, cap)
             time.sleep(1)
