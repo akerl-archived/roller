@@ -384,13 +384,12 @@ class Kernel(object):
             stderr=subprocess.PIPE,
         )
         counter = 0
-        while True:
-            if make_process.poll() is not None:
-                break
-            line = make_process.stdout.readline()
-            if self.verbose and len(line):
+        while len(make_process.stdout.readline()):
+            if self.verbose:
                 counter += 1
                 progress_bar(counter, cap)
+            make_process.stdout.flush()
+        while make_process.poll() is None:
             time.sleep(1)
         if make_process.returncode != 0:
             print('Failed to make kernel')
