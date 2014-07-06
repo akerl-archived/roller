@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '0.4.16'
+VERSION = '0.4.17'
 
 import os
 import sys
@@ -391,7 +391,7 @@ class Kernel(object):
         while len(make_process.stdout.readline()):
             if self.verbose:
                 counter += 1
-                progress_bar(counter, cap)
+                progress_bar(min(counter, cap), cap)
             make_process.stdout.flush()
         while make_process.poll() is None:
             time.sleep(1)
