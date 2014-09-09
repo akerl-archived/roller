@@ -20,8 +20,10 @@ Roller provides a pythonic Kernel object for configuring and compiling kernels, 
     * -n, --new-revision: set new revision to create
         * "next" will automatically increment to the next revision
         * Omit this to build directly from the selected config without modification
-    * -c, --config: kernel version to get the initial configuration from. (defaults to current running version)
-    * -r, --config-revision: kernel revision to use for initial configuration. (defaults to "current", which uses /proc/config.gz)
+    * -c, --config: kernel version to get the initial configuration from (defaults to current running version)
+    * -r, --config-revision: kernel revision to use for initial configuration
+        * "current", which is the default, will use /proc/config.gz
+        * "none" will base configuration on `make allnoconfig` rather than using current or a saved config file
     * -s, --skip-install: don't install kernel to /boot
     * -p, --patch: Open a shell before configuration to allow patching the kernel tree
     * -b, --build-dir: Set path to use for downloading/extracting kernel (defaults to /tmp)
