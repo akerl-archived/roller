@@ -325,7 +325,11 @@ class Kernel(object):
             subprocess.call(['make', 'mrproper'], stdout=devnull())
         except:
             raise EnvironmentError('Failed to clean your kernel tree')
-        if self.config_revision == 'current':
+        if self.config_revision == 'none':
+            self.log('Using allnoconfig for initial configuration')
+            subprocess.call(['make', 'allnoconfig'])
+            return
+        elif self.config_revision == 'current':
             self.log('Inserting config from current system kernel')
             with gzip.open('/proc/config.gz') as old_config:
                 with open('.config', 'wb') as new_config:
