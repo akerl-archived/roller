@@ -180,7 +180,7 @@ def require_attr(attribute):
 class TarFileWithProgress(tarfile.TarFile):
     def __init__(self, *args, **kwargs):
         self.callback = kwargs.pop('callback', None)
-        super().__init__(*args, **kwargs)
+        super(TarFileWithProgress, self).__init__(*args, **kwargs)
         if self.callback is not None:
             self._total_count = len(self.getmembers())
             self._extracted_count = 0
@@ -189,7 +189,7 @@ class TarFileWithProgress(tarfile.TarFile):
         if self.callback is not None:
             self.callback(self._extracted_count, self._total_count)
             self._extracted_count = self._extracted_count + 1
-        super().extract(*args, **kwargs)
+        super(TarFileWithProgress, self).extract(*args, **kwargs)
 
 
 class Kernel(object):
