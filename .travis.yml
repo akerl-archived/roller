@@ -19,6 +19,6 @@ notifications:
   email: false
   irc:
     channels:
-      - secure: e1grSUINcXdm/tmgI+bwjz71+eHyZanT8n/IFkDaU8r/uNhrDXsahHLI8I+dnDFSv/MU4CELDXu58QOOOEu9Sogcx4eb9DvixxLcefhpZAuOTCmogqDFLt+MKZSG/mMzKR4VtkK/X2huOC1+MSwfKB2qS/d7VOS49zmLYO+MyTU=
+    - irc.oftc.net#akerl
     template:
     - "%{repository}/%{branch}/%{build_number}: %{message} -- %{build_url}"
