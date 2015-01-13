@@ -409,7 +409,7 @@ class Kernel(object):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Installing the kernel image')
         if not os.path.isdir('/boot'):
-            os.makedirs('/boot', 0o755, True)
+            os.makedirs('/boot', 0o755)
         shutil.copy(
             'arch/x86/boot/bzImage',
             '/boot/vmlinuz-{0}_{1}'.format(self.version, self.revision)
@@ -436,7 +436,7 @@ kernel /boot/vmlinuz-{0}_{1} root={2} ro\n'''.format(
             self.version, self.revision, device, hd)
         if not os.path.isdir('/boot/grub'):
             self.log('Making /boot/grub')
-            os.makedirs('/boot/grub', 0o755, True)
+            os.makedirs('/boot/grub', 0o755)
         if not os.path.isfile('/boot/grub/menu.lst'):
             self.log('Creating initial menu.lst')
             with open('/boot/grub/menu.lst', 'w') as handle:
