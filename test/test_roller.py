@@ -43,9 +43,7 @@ class TestRoller:
         assert roller.get_current_kernel_revision() == '0'
 
     def test_easyroll(self):
-        arg_sets = [
-            ['-v', '-k', '3.13.6', '-c', '3.13.6', '-r', '1']
-        ]
+        arg_sets = []
         for args in arg_sets:
             roller.easy_roll(args)
 
