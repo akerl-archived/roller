@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 
 import os
 import sys
@@ -238,7 +238,7 @@ class Kernel(object):
         if self.version[0] == '2':
             major = self.version[0:3]
         else:
-            major = '3.x'
+            major = self.version[0] + '.x'
         if 'rc' in self.version:
             testing = 'testing/'
         else:
