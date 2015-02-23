@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import print_function
 
-VERSION = '1.0.1'
-
 import os
 import sys
 import glob
@@ -24,6 +22,8 @@ try:
 except ImportError:
     from urllib2 import urlopen
     from urllib import urlretrieve
+
+VERSION = '1.0.1'
 
 try:
     width = shutil.get_terminal_size((40, 0)).columns
