@@ -13,7 +13,6 @@ import subprocess
 import multiprocessing
 import argparse
 import string
-import random
 import time
 from contextlib import closing
 
