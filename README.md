@@ -2,8 +2,9 @@ roller
 =========
 
 [![Latest Version](https://img.shields.io/pypi/v/roller.svg)](https://pypi.python.org/pypi/roller/)
-[![Coverage Status](https://img.shields.io/coveralls/akerl/roller.svg)](https://coveralls.io/r/akerl/roller)
-[![Build Status](https://img.shields.io/travis/akerl/roller.svg)](https://travis-ci.org/akerl/roller)
+[![Build Status](https://img.shields.io/circleci/project/akerl/roller.svg)](https://circleci.com/gh/akerl/roller)
+[![Coverage Status](https://img.shields.io/codecov/c/github/akerl/roller.svg)](https://codecov.io/github/akerl/roller)
+[![Code Quality](https://img.shields.io/codacy/b324f431700a4d41a70f5b7cf23c625f.svg)](https://www.codacy.com/app/akerl/roller)
 [![MIT Licensed](https://img.shields.io/badge/license-MIT-green.svg)](https://tldrlegal.com/license/mit-license)
 
 Roller provides a pythonic Kernel object for configuring and compiling kernels, and a streamlined command line tool for using that object
