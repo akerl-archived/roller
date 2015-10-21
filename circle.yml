@@ -1,6 +1,6 @@
 dependencies:
   pre:
-    - pyenv local 3.4.3 3.3.3 3.2.5 2.7.10
+    - pyenv local 3.4.3 3.3.3 2.7.10
 test:
   override:
     - tox -v
