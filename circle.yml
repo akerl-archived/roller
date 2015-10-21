@@ -4,3 +4,6 @@ dependencies:
 test:
   override:
     - tox -v
+test:
+  post:
+    - codecov
