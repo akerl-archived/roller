@@ -2,6 +2,7 @@ roller
 =========
 
 [![Latest Version](https://img.shields.io/pypi/v/roller.svg)](https://pypi.python.org/pypi/roller/)
+[![Dependency Status](https://img.shields.io/gemnasium/akerl/roller.svg)](https://gemnasium.com/akerl/roller)
 [![Build Status](https://img.shields.io/circleci/project/akerl/roller.svg)](https://circleci.com/gh/akerl/roller)
 [![Coverage Status](https://img.shields.io/codecov/c/github/akerl/roller.svg)](https://codecov.io/github/akerl/roller)
 [![Code Quality](https://img.shields.io/codacy/b324f431700a4d41a70f5b7cf23c625f.svg)](https://www.codacy.com/app/akerl/roller)
