@@ -236,7 +236,7 @@ class Kernel(object):
     def download(self):
         if 'rc' in self.version:
             base_url = 'https://git.kernel.org/torvalds/t'
-            url = '{0}/linux-{1}.tar.xz'.format(base_url, self.version)
+            url = '{0}/linux-{1}.tar.gz'.format(base_url, self.version)
         else:
             base_url = 'https://cdn.kernel.org/pub/linux/kernel'
             major = 'v' + self.version[0] + '.x'
