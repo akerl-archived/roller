@@ -234,24 +234,20 @@ class Kernel(object):
 
     @require_attr('version')
     def download(self):
-        if self.version[0] == '2':
-            major = self.version[0:3]
-        else:
-            major = self.version[0] + '.x'
         if 'rc' in self.version:
-            testing = 'testing/'
+            base_url = 'https://git.kernel.org/torvalds/t'
+            url = '{0}/linux-{1}.tar.xz'.format(base_url, self.version)
         else:
-            testing = ''
+            base_url = 'https://cdn.kernel.org/pub/linux/kernel'
+            major = 'v' + self.version[0] + '.x'
+            url = '{0}/{1}/linux-{3}.tar.gz'.format(
+                base_url,
+                major,
+                self.version
+            )
 
         destination = '{0}/archives/linux-{1}.tar.gz'.format(
             self.build_dir,
-            self.version
-        )
-        base_url = 'http://www.kernel.org/pub/linux/kernel'
-        source = '{0}/v{1}/{2}linux-{3}.tar.gz'.format(
-            base_url,
-            major,
-            testing,
             self.version
         )
 
@@ -265,7 +261,7 @@ class Kernel(object):
             hook = None
         try:
             urlretrieve(
-                source,
+                url,
                 filename=destination,
                 reporthook=hook
             )
