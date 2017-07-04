@@ -22,7 +22,7 @@ except ImportError:
     from urllib2 import urlopen
     from urllib import urlretrieve
 
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 try:
     width = shutil.get_terminal_size((40, 0)).columns
