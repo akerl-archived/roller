@@ -240,7 +240,7 @@ class Kernel(object):
         else:
             base_url = 'https://cdn.kernel.org/pub/linux/kernel'
             major = 'v' + self.version[0] + '.x'
-            url = '{0}/{1}/linux-{3}.tar.gz'.format(
+            url = '{0}/{1}/linux-{2}.tar.gz'.format(
                 base_url,
                 major,
                 self.version
