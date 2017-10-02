@@ -3,7 +3,7 @@ machine:
     PYENV_VERSION: 3.6.2 2.7.14
     TOXENV: py36,py27
   override:
-    - for i in $(PYENV_VERSION) ; do pyenv install $i ; done
+    - for i in $PYENV_VERSION ; do pyenv install $i ; done
 test:
   override:
     - tox -v
