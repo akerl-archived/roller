@@ -1,6 +1,16 @@
+require 'open-uri'
+Prospectus.extra_dep('file', 'nokogiri')
 Prospectus.extra_dep('file', 'prospectus_circleci')
 
 my_slug = 'akerl/roller'
+
+def upstream_version
+  page = Nokogiri::HTML(open('https://www.python.org/downloads/source/'))
+  table = page.xpath('//*[@id="content"]/div/section/article/ul[1]')
+  table.text.split("\n").grep(/Latest/).map(&:split).map(&:last).join(' ')
+end
+
+UPSTREAM_VERSION = upstream_version
 
 item do
   noop
@@ -17,6 +27,20 @@ item do
       actual do
         gemnasium
         slug my_slug
+      end
+    end
+
+    item do
+      name 'python'
+
+      expected do
+        static
+        set UPSTREAM_VERSION
+      end
+
+      actual do
+        static
+        set File.readlines('circle.yml').grep(/pyenv/).first.split[3..-1].join(' ')
       end
     end
   end
