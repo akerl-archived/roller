@@ -1,9 +1,8 @@
 machine:
   environment:
-    PYENV_VERSION: 3.6.4 2.7.14
+    PYENV_VERSION: 3.6.2 2.7.14
     TOXENV: py36,py27
   post:
-    - cd /opt/circleci/.pyenv/plugins/python-build/../.. && git pull
     - for i in $PYENV_VERSION ; do pyenv install -s $i ; done
 test:
   override:
