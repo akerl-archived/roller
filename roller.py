@@ -155,7 +155,7 @@ def progress_bar(current, goal):
 def download_progress(current_block, block_size, total_size):
     if current_block % 5 == 0:
         if total_size == -1:
-            total_size = 170000000 # magic number
+            total_size = 170000000  # magic number
         current_size = min(current_block * block_size, total_size)
         progress_bar(current_size, total_size)
 
