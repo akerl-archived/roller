@@ -40,7 +40,7 @@ item do
 
       actual do
         static
-        set File.readlines('circle.yml').grep(/PYENV_VER/).first.split(': ').last.chomp
+        set File.readlines('circle.yml').grep(/PYENV_VER/).first.split.last.gsub(':',' ')
       end
     end
   end
