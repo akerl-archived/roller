@@ -131,7 +131,7 @@ def progress_bar(current, goal):
     )
     try:
         print('\r' + text_bar, end='')
-    except:
+    except Exception:
         sys.stdout.flush()
 
 
@@ -230,7 +230,7 @@ class Kernel(object):
                 filename=destination,
                 reporthook=hook
             )
-        except:
+        except Exception:
             os.remove(destination)
             raise
 
@@ -255,7 +255,7 @@ class Kernel(object):
         try:
             archive = TarFileWithProgress.open(source, callback=callback)
             archive.extractall(destination)
-        except:
+        except Exception:
             shutil.rmtree(
                 '{0}linux-{1}'.format(destination, self.version),
                 ignore_errors=True
@@ -282,7 +282,7 @@ class Kernel(object):
         self.log('Cleaning your kernel tree')
         try:
             subprocess.call(['make', 'mrproper'], stdout=devnull())
-        except:
+        except Exception:
             raise EnvironmentError('Failed to clean your kernel tree')
         if self.config == 'none':
             self.log('Using allnoconfig for initial configuration')
@@ -430,6 +430,7 @@ def easy_roll(raw_args):
         kernel.where()
     else:
         kernel.install()
+
 
 if __name__ == '__main__':
     easy_roll(sys.argv[1:])
