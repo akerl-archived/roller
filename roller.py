@@ -22,7 +22,7 @@ except ImportError:
     from urllib2 import urlopen
     from urllib import urlretrieve
 
-VERSION = '1.1.2'
+VERSION = '2.0.0'
 
 try:
     width = shutil.get_terminal_size((40, 0)).columns
@@ -51,24 +51,23 @@ def get_args(raw_args):
         help='Kernel version to build',
     )
     parser.add_argument(
-        '-n', '--new-revision',
-        dest='new_revision',
+        '-r', '--revision',
+        dest='revision',
         type=str,
-        default=None,
+        default='devel',
         help='Kernel revision to create',
     )
     parser.add_argument(
         '-c', '--config',
-        dest='config_version',
-        default=get_current_kernel_version(),
+        dest='config',
+        default='current',
         help='Config version to work from',
     )
     parser.add_argument(
-        '-r', '--config-revision',
-        dest='config_revision',
-        type=str,
-        default='current',
-        help='Config revision to work from',
+        '-o', '--output',
+        dest='output',
+        default='new',
+        help='Where to save new config'
     )
     parser.add_argument(
         '-s', '--skip-install',
@@ -108,21 +107,6 @@ def get_latest_kernel_version(kind='stable'):
             if search_string in line:
                 return str(line.rstrip(' (EOL)').rsplit(' ', 1)[1])
     raise LookupError('Could not find the latest {0} kernel'.format(kind))
-
-
-def get_current_kernel_version():
-    return os.uname()[2].split('_', 1)[0]
-
-
-def get_current_kernel_revision():
-    current_kernel = os.uname()[2].rsplit('_', 1)
-    if len(current_kernel) < 2:
-        return '0'
-    current_revision = current_kernel[1]
-    if all(x in set(string.digits) for x in current_revision):
-        return current_revision
-    else:
-        return '0'
 
 
 def run_patches(kernel, patches):
@@ -197,8 +181,7 @@ class Kernel(object):
     def __init__(self, build_dir=None, config_dir=None, verbose=True):
         self.version = None
         self.revision = None
-        self.config_version = None
-        self.config_revision = None
+        self.config = None
         self.verbose = verbose
 
         if build_dir is None:
@@ -313,8 +296,7 @@ class Kernel(object):
 
     @require_attr('version')
     @require_attr('revision')
-    @require_attr('config_version')
-    @require_attr('config_revision')
+    @require_attr('config')
     def configure(self, merge_method='oldconfig'):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Cleaning your kernel tree')
@@ -322,25 +304,23 @@ class Kernel(object):
             subprocess.call(['make', 'mrproper'], stdout=devnull())
         except:
             raise EnvironmentError('Failed to clean your kernel tree')
-        if self.config_revision == 'none':
+        if self.config == 'none':
             self.log('Using allnoconfig for initial configuration')
             subprocess.call(['make', 'allnoconfig'])
             return
-        elif self.config_revision == 'current':
+        elif self.config == 'current':
             self.log('Inserting config from current system kernel')
             with gzip.open('/proc/config.gz') as old_config:
                 with open('.config', 'wb') as new_config:
                     new_config.write(old_config.read())
         else:
-            self.log('Copying saved config: {0}_{1}'.format(
-                self.config_version,
-                self.config_revision,
+            self.log('Copying saved config: {0}'.format(
+                self.config,
             ))
             shutil.copy(
-                '{0}/{1}_{2}'.format(
+                '{0}/{1}'.format(
                     self.config_dir,
-                    self.config_version,
-                    self.config_revision
+                    self.config,
                 ),
                 '.config'
             )
@@ -351,28 +331,23 @@ class Kernel(object):
                 done = True
             else:
                 print(line.rstrip())
-        if self.config_version != self.version:
-            self.log('Merging your kernel config via "{0}"'.format(
-                merge_method)
-            )
-            subprocess.call(['make', merge_method])
+        self.log('Merging your kernel config via "{0}"'.format(merge_method))
+        subprocess.call(['make', merge_method])
 
     @require_attr('version')
-    @require_attr('revision')
+    @require_attr('output')
     def modify(self):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Running menuconfig')
         subprocess.call(['make', 'menuconfig'])
-        self.log('Saving configuration: {0}_{1}'.format(
-            self.version,
-            self.revision
+        self.log('Saving configuration: {0}'.format(
+            self.output
         ))
         shutil.copy(
             '.config',
-            '{0}/{1}_{2}'.format(
+            '{0}/{1}'.format(
                 self.config_dir,
-                self.version,
-                self.revision,
+                self.output
             ),
         )
 
@@ -470,36 +445,16 @@ def easy_roll(raw_args):
     )
 
     kernel.version = args.new_version
-    kernel.config_version = args.config_version
-    kernel.config_revision = args.config_revision
-    if args.new_revision == 'next':
-        if args.new_version in kernel.existing_configs:
-            kernel.revision = str(
-                int(max(kernel.existing_configs[args.new_version])) + 1
-            )
-        else:
-            kernel.revision = '1'
-        modify = True
-    elif args.new_revision is None:
-        if args.new_version == args.config_version:
-            if args.config_revision == 'current':
-                kernel.revision = get_current_kernel_revision()
-            else:
-                kernel.revision = args.config_revision
-        else:
-            kernel.revision = '0'
-        modify = False
-    else:
-        kernel.revision = args.new_revision
-        modify = True
+    kernel.config = args.config
+    kernel.revision = args.revision
+    kernel.output = args.output
 
     kernel.download()
     kernel.extract()
     if args.patches:
         run_patches(kernel, args.patches)
     kernel.configure()
-    if modify:
-        kernel.modify()
+    kernel.modify()
     kernel.make()
     if args.skip_install:
         kernel.where()
