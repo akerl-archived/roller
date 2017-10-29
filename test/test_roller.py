@@ -11,7 +11,7 @@ class TestRoller:
         assert defaults.revision == 'dev'
         assert defaults.config == 'current'
         assert defaults.output == 'new'
-        assert defaults.modify == False
+        assert defaults.modify is False
         assert defaults.skip_install is False
         assert defaults.build_dir == '/tmp'
 
