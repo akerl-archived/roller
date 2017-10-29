@@ -54,7 +54,7 @@ def get_args(raw_args):
         '-r', '--revision',
         dest='revision',
         type=str,
-        default='devel',
+        default='dev',
         help='Kernel revision to create',
     )
     parser.add_argument(
