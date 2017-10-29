@@ -21,7 +21,7 @@ class TestRoller:
 
     def test_arguments(self):
         assert roller.get_args(['-v']).verbose is True
-        assert roller.get_args(['1.2.3']).new_version == '1.2.3'
+        assert roller.get_args(['-k', '1.2.3']).new_version == '1.2.3'
         assert roller.get_args(['-c', '1.2.3']).config == '1.2.3'
         assert roller.get_args(['-s']).skip_install is True
         assert roller.get_args(['-b', '/foo']).build_dir == '/foo'
