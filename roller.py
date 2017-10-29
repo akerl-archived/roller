@@ -70,6 +70,12 @@ def get_args(raw_args):
         help='Where to save new config'
     )
     parser.add_argument(
+        '-m', '--modify',
+        dest='modify',
+        action='store_true',
+        help='Run menuconfig to live-modify the config'
+    )
+    parser.add_argument(
         '-s', '--skip-install',
         dest='skip_install',
         action='store_true',
@@ -454,7 +460,8 @@ def easy_roll(raw_args):
     if args.patches:
         run_patches(kernel, args.patches)
     kernel.configure()
-    kernel.modify()
+    if args.modify:
+        kernel.modify()
     kernel.make()
     if args.skip_install:
         kernel.where()
