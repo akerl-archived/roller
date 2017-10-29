@@ -2,6 +2,8 @@ machine:
   environment:
     PYENV_VERSION: 3.6.3:2.7.14
     TOXENV: py36,py27
+  override:
+    - echo 'no virtualenv inference'
   post:
     - cd /opt/circleci/.pyenv && git pull
     - for i in ${PYENV_VERSION//:/ } ; do pyenv install -s $i ; done
