@@ -94,13 +94,6 @@ def get_args(raw_args):
         default='/tmp',
         help='directory for downloading, extracting, and building the kernel'
     )
-    parser.add_argument(
-        '-d', '--config-dir',
-        dest='config_dir',
-        type=str,
-        default=None,
-        help='directory for kernel configs'
-    )
     return parser.parse_args(raw_args)
 
 
@@ -184,7 +177,7 @@ class TarFileWithProgress(tarfile.TarFile):
 
 
 class Kernel(object):
-    def __init__(self, build_dir=None, config_dir=None, verbose=True):
+    def __init__(self, build_dir=None, verbose=True):
         self.version = None
         self.revision = None
         self.config = None
@@ -196,28 +189,9 @@ class Kernel(object):
             self.build_dir = os.path.expanduser(build_dir.rstrip('/'))
         self.build_dir = os.path.abspath(self.build_dir)
 
-        if config_dir is None:
-            self.config_dir = self.build_dir + '/configs'
-        else:
-            self.config_dir = os.path.expanduser(config_dir.rstrip('/'))
-        self.config_dir = os.path.abspath(self.config_dir)
-        if not os.path.isdir(self.config_dir):
-            os.makedirs(self.config_dir, 0o755)
-
         for subdir in ['/sources', '/archives']:
             if not os.path.isdir(self.build_dir + subdir):
                 os.makedirs(self.build_dir + subdir, 0o755)
-
-        raw_configs = [
-            x.split('_')
-            for x in os.listdir(self.config_dir)
-            if '_' in x
-        ]
-        self.existing_configs = {
-            x[0]: [] for x in raw_configs
-        }
-        for config in raw_configs:
-            self.existing_configs[config[0]].append((config[1]))
 
     def log(self, message):
         if self.verbose:
@@ -323,13 +297,7 @@ class Kernel(object):
             self.log('Copying saved config: {0}'.format(
                 self.config,
             ))
-            shutil.copy(
-                '{0}/{1}'.format(
-                    self.config_dir,
-                    self.config,
-                ),
-                '.config'
-            )
+            shutil.copy(self.config, '.config')
         done = False
         for line in fileinput.input('.config', inplace=True):
             if not done and line.find('CONFIG_LOCALVERSION') == 0:
@@ -351,13 +319,7 @@ class Kernel(object):
         self.log('Saving configuration: {0}'.format(
             self.output
         ))
-        shutil.copy(
-            '.config',
-            '{0}/{1}'.format(
-                self.config_dir,
-                self.output
-            ),
-        )
+        shutil.copy('.config', self.output)
 
     @require_attr('version')
     def make(self, jobs=None):
@@ -448,7 +410,6 @@ def easy_roll(raw_args):
     args = get_args(raw_args)
     kernel = Kernel(
         build_dir=args.build_dir,
-        config_dir=args.config_dir,
         verbose=args.verbose
     )
 
