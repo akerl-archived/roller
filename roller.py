@@ -346,6 +346,8 @@ class Kernel(object):
         os.chdir('{0}/sources/linux-{1}'.format(self.build_dir, self.version))
         self.log('Running menuconfig')
         subprocess.call(['make', 'menuconfig'])
+        if self.output == 'none':
+            return
         self.log('Saving configuration: {0}'.format(
             self.output
         ))
