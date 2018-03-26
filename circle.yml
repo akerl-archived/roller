@@ -2,14 +2,14 @@ machine:
 dependencies:
   override:
     - git pull:
-      environment:
-        PYENV_VERSION: 3.6.4:2.7.14
-        TOXENV: py36,py27
+        environment:
+          PYENV_VERSION: 3.6.4:2.7.14
+          TOXENV: py36,py27
       pwd: /opt/circleci/.pyenv
     - 'for i in ${PYENV_VERSION//:/ } ; do pyenv install -s $i ; done':
-      environment:
-        PYENV_VERSION: 3.6.4:2.7.14
-        TOXENV: py36,py27
+        environment:
+          PYENV_VERSION: 3.6.4:2.7.14
+          TOXENV: py36,py27
 test:
   override:
     - tox -v
