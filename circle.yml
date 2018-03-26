@@ -12,6 +12,7 @@ dependencies:
         environment:
           PYENV_VERSION: 3.6.4:2.7.14
           TOXENV: py36,py27
+    - pip install tox
 test:
   override:
     - tox -v
