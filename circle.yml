@@ -1,4 +1,3 @@
-machine:
 dependencies:
   override:
     - git pull:
