@@ -1,7 +1,6 @@
 machine:
   pre:
-    - mkdir /home/ubuntu/virtualenvs/venv-system
-    - touch /home/ubuntu/virtualenvs/venv-system
+    - mkdir -p /home/ubuntu/virtualenvs/venv-system
   environment:
     PYENV_VERSION: 3.6.4:2.7.14
     TOXENV: py36,py27
