@@ -1,9 +1,6 @@
 machine:
   pre:
-    - touch /home/ubuntu/virtualenvs/venv-system
-  post:
-    - touch /home/ubuntu/virtualenvs/venv-system
-  override:
+    - mkdir /home/ubuntu/virtualenvs/venv-system
     - touch /home/ubuntu/virtualenvs/venv-system
   environment:
     PYENV_VERSION: 3.6.4:2.7.14
