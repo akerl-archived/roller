@@ -3,7 +3,7 @@ machine:
     - rm -rf /home/ubuntu/virtualenvs/venv-system
     - mkdir -p /home/ubuntu/virtualenvs/venv-system
   environment:
-    PYENV_VERSION: 3.6.5:2.7.14
+    PYENV_VERSION: 3.6.5:2.7.15
     TOXENV: py36,py27
 dependencies:
   override:
