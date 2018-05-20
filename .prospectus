@@ -17,20 +17,6 @@ item do
 
   deps do
     item do
-      name 'gems'
-
-      expected do
-        static
-        set 'green'
-      end
-
-      actual do
-        gemnasium
-        slug my_slug
-      end
-    end
-
-    item do
       name 'python'
 
       expected do
