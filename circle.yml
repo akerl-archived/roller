@@ -1,17 +1,12 @@
 machine:
-  pre:
-    - rm -rf /home/ubuntu/virtualenvs/venv-system
-    - mkdir -p /home/ubuntu/virtualenvs/venv-system
+  services:
+  - docker
   environment:
     PYENV_VERSION: 3.7.0:2.7.15
     TOXENV: py37,py27
 dependencies:
   override:
-    - 'cd /opt/circleci/.pyenv && git pull'
-    - 'for i in ${PYENV_VERSION//:/ } ; do pyenv install -s $i ; done'
-    - pip install -r requirements.txt
+  - /bin/true
 test:
   override:
-    - tox -v
-  post:
-    - codecov
+  - docker run -ti -e PYENV_VERSION -e TOXENV -v $(pwd):/opt/build -w /opt/build dock0/python /opt/build/scripts/test.sh
