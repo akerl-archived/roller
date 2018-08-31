@@ -7,7 +7,7 @@ my_slug = 'akerl/roller'
 def upstream_version
   page = Nokogiri::HTML(open('https://www.python.org/downloads/source/'))
   table = page.xpath('//*[@id="content"]/div/section/article/ul[1]')
-  table.text.split("\n").grep(/Latest/).map(&:split).map(&:last).join(' ')
+  table.text.split("\n").grep(/Latest/).map(&:split).map(&:last).join(':')
 end
 
 UPSTREAM_VERSION = upstream_version
@@ -26,7 +26,7 @@ item do
 
       actual do
         static
-        set File.readlines('circle.yml').grep(/PYENV_VER/).first.split.last.gsub(':',' ')
+        set File.readlines('.travis.yml').grep(/PYENV_VER/).first.split('=').last.strip
       end
     end
   end
