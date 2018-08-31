@@ -1,0 +1,15 @@
+sudo: required
+dist: trusty
+services:
+- docker
+env:
+  global:
+  - PYENV_VERSION=3.7.0:2.7.15
+  - TOXENV=py37,py27
+script:
+- docker run -ti -e PYENV_VERSION -e TOXENV -v $(pwd):/opt/build -w /opt/build dock0/python
+  /opt/build/scripts/test.sh
+notifications:
+  email: false
+  slack:
+    secure: iEWREd3ELJRt5sujbjvHBVt3WWkNgOjw7VKThYB6v1ym4VGZJkKmWKxsKMuqNPMhb+qjZke6a+FFMhCzEjqz+9NgLPw05caXhG/e0mHuJMH4c5HLGIJ6Cn0RJweH5GVVYhkJItR3pSGYW0Y/HVBofmvC+mX4aQt2kd67p0JbM84PDB4yfxQG/J21CagoyZDevdiTESzKZB0Jt5LcJ1oPazAv7WPzO9FwO0APkiwMeKs9CJ8vS1gSHKlfWQr8nZ5vn23hoI25rCs8kmrK7NkCwC4Jho9VufJc0GWRZq4waJOBBi1QOQHz3ahbtw86rtI+G9qj5QwSNULWHncre4UZNIm0eUFM6RO9JTBvaF6MXurWG3fL/CcvgB44OnHQ1W83Td20ISYhyppmW8oiKKPy9M67ZG/sQJz+YXoMxKXJVhLRwiDbLKwIPovRA4ccEzINVu4WZbD3Xq/P52DjyCT665vXdKdyiIKLyYizR3kxGS1Sbbqm5GWh7VlJaW3IsPWTSTnPg62mws/PeaPwR1/1aUuwiih1qo/sP3ZQNihRpNM7+USWlyZll26mKtKxP3IhVVV2cVUeyJdH9PE+rzrW7EAu4BBWhfUTqU4bO6heZuqfKvZ2ITBZN2WNHhD8NQ9By7vbcrCvIlNQ/ccmReKhHXShO7dXOvXh0kV+o6My6Ww=
