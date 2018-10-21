@@ -4,7 +4,7 @@ services:
 - docker
 env:
   global:
-  - PYENV_VERSION=3.7.0:2.7.15
+  - PYENV_VERSION=3.7.1:2.7.15
   - TOXENV=py37,py27
 script:
 - docker run -ti -e PYENV_VERSION -e TOXENV -v $(pwd):/opt/build -w /opt/build dock0/python
