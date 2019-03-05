@@ -31,7 +31,7 @@ class TestRoller:
         longterm = roller.get_latest_kernel_version(kind='longterm')
         mainline = roller.get_latest_kernel_version(kind='mainline')
         assert stable != longterm
-        assert 'rc' in mainline
+        assert 'rc' in mainline or mainline.count('.') == 1
 
     def test_easyroll(self):
         arg_sets = []
